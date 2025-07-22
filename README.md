@@ -1,4 +1,4 @@
-# AMR-ACR-Firebase 프로젝트
+# ACR-Firebase 프로젝트
 
 이 프로젝트는 자율 이동 로봇(AMR) 시뮬레이션 환경에 Firebase Firestore 데이터베이스를 연동하는 방법을 다룹니다.
 
@@ -7,9 +7,9 @@
 - [프로젝트 설정](#-프로젝트-설정)
 - [Firebase 연동](#-firebase-연동)
 
---- unity에서 해야 할 것들
+---
 
-## 프로젝트 설정
+## ? 프로젝트 설정
 
 기본 환경을 설정하고 장애물(Obstacle)을 배치하는 과정입니다.
 
@@ -43,7 +43,7 @@
 
 ---
 
-## Firebase 연동
+## ? Firebase 연동
 
 Unity 프로젝트에 Firebase Firestore 데이터베이스를 연동하는 과정입니다.
 
@@ -57,7 +57,7 @@ Unity 프로젝트에 Firebase Firestore 데이터베이스를 연동하는 과정입니다.
     -   다운로드한 SDK의 압축을 해제하면 `dotnet4` 폴더가 있습니다.
     -   아래 **두 개의 `.unitypackage` 파일**을 Unity 프로젝트의 `Assets` 창으로 순서대로 드래그 앤 드롭하여 임포트합니다.
 
-    > **?? 전문가 팁:** 종속성 문제를 방지하기 위해 반드시 아래 순서를 지켜주세요.
+    > ** ?? 전문가 팁:** 종속성 문제를 방지하기 위해 반드시 아래 순서를 지켜주세요.
     >
     > 1.  `FirebaseAuth.unitypackage` (인증 및 핵심 라이브러리)
     > 2.  `FirebaseFirestore.unitypackage` (Firestore 데이터베이스)

@@ -35,6 +35,12 @@
 
     ![Static 설정](./Image/static.png)
 
+5. **물체가 움직일 바닥 설정**
+    -   Unity에서 물체가 움직일 바닥을 클릭한다
+    -   Inspector 창에 Navmesh를 추가하고 agent type을 설정하고 bake을 누른다.
+
+    ![Bake 하는 법](./Image/Bake.png) 
+
 ---
 
 ## Firebase 연동

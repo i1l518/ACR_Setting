@@ -7,9 +7,9 @@
 - [프로젝트 설정](#-프로젝트-설정)
 - [Firebase 연동](#-firebase-연동)
 
----
+--- unity에서 해야 할 것들
 
-## ? 프로젝트 설정
+## 프로젝트 설정
 
 기본 환경을 설정하고 장애물(Obstacle)을 배치하는 과정입니다.
 
@@ -37,7 +37,7 @@
 
 ---
 
-## ? Firebase 연동
+## Firebase 연동
 
 Unity 프로젝트에 Firebase Firestore 데이터베이스를 연동하는 과정입니다.
 

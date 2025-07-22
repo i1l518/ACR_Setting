@@ -1,54 +1,54 @@
-// 1. í•„ìš”í•œ íŒ¨í‚¤ì§€ ê°€ì ¸ì˜¤ê¸°
+// 1. ÇÊ¿äÇÑ ÆĞÅ°Áö °¡Á®¿À±â
 const { initializeApp, cert } = require('firebase-admin/app');
-const { getFirestore, Timestamp } = require('firebase-admin/firestore'); // Timestampë¥¼ ì‚¬ìš©í•˜ê¸° ìœ„í•´ ì¶”ê°€
+const { getFirestore, Timestamp } = require('firebase-admin/firestore'); // Timestamp¸¦ »ç¿ëÇÏ±â À§ÇØ Ãß°¡
 
-// 2. ì„œë¹„ìŠ¤ ê³„ì • í‚¤ íŒŒì¼ ë¡œë“œ
+// 2. ¼­ºñ½º °èÁ¤ Å° ÆÄÀÏ ·Îµå
 const serviceAccount = require('./amr-database-c3699-firebase-adminsdk-fbsvc-ae043dca98.json');
 
-// 3. Firebase Admin ì•± ì´ˆê¸°í™”
-// ì•±ì´ ì´ë¯¸ ì´ˆê¸°í™”ë˜ì§€ ì•Šì•˜ì„ ê²½ìš°ì—ë§Œ ì´ˆê¸°í™”í•˜ë„ë¡ ë°©ì–´ ì½”ë“œë¥¼ ì¶”ê°€í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
+// 3. Firebase Admin ¾Û ÃÊ±âÈ­
+// ¾ÛÀÌ ÀÌ¹Ì ÃÊ±âÈ­µÇÁö ¾Ê¾ÒÀ» °æ¿ì¿¡¸¸ ÃÊ±âÈ­ÇÏµµ·Ï ¹æ¾î ÄÚµå¸¦ Ãß°¡ÇÒ ¼ö ÀÖ½À´Ï´Ù.
 try {
   initializeApp({
     credential: cert(serviceAccount)
   });
 } catch (error) {
-  // ì´ë¯¸ ì´ˆê¸°í™”ëœ ê²½ìš° ì—ëŸ¬ê°€ ë°œìƒí•  ìˆ˜ ìˆìœ¼ë¯€ë¡œ ë¬´ì‹œí•˜ê±°ë‚˜ ë¡œê·¸ë¥¼ ë‚¨ê¸¸ ìˆ˜ ìˆìŠµë‹ˆë‹¤.
-  // console.log("Firebase Admin SDKê°€ ì´ë¯¸ ì´ˆê¸°í™”ë˜ì—ˆìŠµë‹ˆë‹¤.");
+  // ÀÌ¹Ì ÃÊ±âÈ­µÈ °æ¿ì ¿¡·¯°¡ ¹ß»ıÇÒ ¼ö ÀÖÀ¸¹Ç·Î ¹«½ÃÇÏ°Å³ª ·Î±×¸¦ ³²±æ ¼ö ÀÖ½À´Ï´Ù.
+  // console.log("Firebase Admin SDK°¡ ÀÌ¹Ì ÃÊ±âÈ­µÇ¾ú½À´Ï´Ù.");
 }
 
 
-// 4. Firestore ì¸ìŠ¤í„´ìŠ¤ ê°€ì ¸ì˜¤ê¸°
+// 4. Firestore ÀÎ½ºÅÏ½º °¡Á®¿À±â
 const db = getFirestore();
 
-// --- Task ë¬¸ì„œ ìƒì„± í•¨ìˆ˜ (ìƒˆë¡œ ì¶”ê°€) ---
+// --- Task ¹®¼­ »ı¼º ÇÔ¼ö (»õ·Î Ãß°¡) ---
 async function createTaskDocuments() {
-    console.log('ë‹¤ì¤‘ ìš´ì†¡ Task ë¬¸ì„œ ìƒì„±ì„ ì‹œì‘í•©ë‹ˆë‹¤...');
+    console.log('´ÙÁß ¿î¼Û Task ¹®¼­ »ı¼ºÀ» ½ÃÀÛÇÕ´Ï´Ù...');
     const tasksCollectionRef = db.collection('tasks');
 
     // ==========================================================
-    // ì‹œë‚˜ë¦¬ì˜¤ 1: ë‹¤ì¤‘ ì…ê³  (Multi-Inbound) Task
+    // ½Ã³ª¸®¿À 1: ´ÙÁß ÀÔ°í (Multi-Inbound) Task
     // ==========================================================
-    // inbound_station_01ì—ì„œ ì•„ì´í…œ 3ê°œ(A, B, C)ë¥¼ ìˆœì„œëŒ€ë¡œ 1, 2, 3ë²ˆ ìŠ¬ë¡¯ì— ì‹£ê³ ,
-    // ê°ê° ì§€ì •ëœ ë™ì— ë‚´ë ¤ë†“ëŠ” ì„ë¬´
+    // inbound_station_01¿¡¼­ ¾ÆÀÌÅÛ 3°³(A, B, C)¸¦ ¼ø¼­´ë·Î 1, 2, 3¹ø ½½·Ô¿¡ ½Æ°í,
+    // °¢°¢ ÁöÁ¤µÈ ·¢¿¡ ³»·Á³õ´Â ÀÓ¹«
     const multiInboundTask = {
         type: "multi_inbound",
         stops: [
-            // ê²½ìœ ì§€ 1: ì…ê³  ìŠ¤í…Œì´ì…˜ì—ì„œ ì•„ì´í…œ 3ê°œ í”½ì—…
+            // °æÀ¯Áö 1: ÀÔ°í ½ºÅ×ÀÌ¼Ç¿¡¼­ ¾ÆÀÌÅÛ 3°³ ÇÈ¾÷
             {
-                action: "pickup_multi", // ì—¬ëŸ¬ ê°œë¥¼ ì‹£ëŠ”ë‹¤ëŠ” ì•¡ì…˜
+                action: "pickup_multi", // ¿©·¯ °³¸¦ ½Æ´Â´Ù´Â ¾×¼Ç
                 sourceStationId: "inbound_station_01",
                 sourceStationRotation: { y: 180 },
-                items_to_pickup: [ // ì‹£ê¸°ë¡œ ì•½ì†ëœ ì•„ì´í…œ ëª©ë¡
+                items_to_pickup: [ // ½Æ±â·Î ¾à¼ÓµÈ ¾ÆÀÌÅÛ ¸ñ·Ï
                     { itemType: "A", targetSlotId: 1 },
                     { itemType: "B", targetSlotId: 2 },
                     { itemType: "C", targetSlotId: 3 }
                 ],
                 status: "pending"
             },
-            // ê²½ìœ ì§€ 2: 1ë²ˆ ìŠ¬ë¡¯ì˜ ì•„ì´í…œì„ Rack(2,0)ì— ë†“ê¸°
+            // °æÀ¯Áö 2: 1¹ø ½½·ÔÀÇ ¾ÆÀÌÅÛÀ» Rack(2,0)¿¡ ³õ±â
             {
                 action: "dropoff",
-                sourceSlotId: 1, // "1ë²ˆ ìŠ¬ë¡¯ì—ì„œ êº¼ë‚´ë¼"
+                sourceSlotId: 1, // "1¹ø ½½·Ô¿¡¼­ ²¨³»¶ó"
                 destination: {
                     rackId: "Rack(2,0)",
                     itemType: "A",
@@ -57,10 +57,10 @@ async function createTaskDocuments() {
                 },
                 status: "pending"
             },
-            // ê²½ìœ ì§€ 3: 2ë²ˆ ìŠ¬ë¡¯ì˜ ì•„ì´í…œì„ Rack(3,4)ì— ë†“ê¸°
+            // °æÀ¯Áö 3: 2¹ø ½½·ÔÀÇ ¾ÆÀÌÅÛÀ» Rack(3,4)¿¡ ³õ±â
             {
                 action: "dropoff",
-                sourceSlotId: 2, // "2ë²ˆ ìŠ¬ë¡¯ì—ì„œ êº¼ë‚´ë¼"
+                sourceSlotId: 2, // "2¹ø ½½·Ô¿¡¼­ ²¨³»¶ó"
                 destination: {
                     rackId: "Rack(3,4)",
                     itemType: "B",
@@ -69,10 +69,10 @@ async function createTaskDocuments() {
                 },
                 status: "pending"
             },
-            // ê²½ìœ ì§€ 4: 3ë²ˆ ìŠ¬ë¡¯ì˜ ì•„ì´í…œì„ Rack(4,7)ì— ë†“ê¸°
+            // °æÀ¯Áö 4: 3¹ø ½½·ÔÀÇ ¾ÆÀÌÅÛÀ» Rack(4,7)¿¡ ³õ±â
             {
                 action: "dropoff",
-                sourceSlotId: 3, // "3ë²ˆ ìŠ¬ë¡¯ì—ì„œ êº¼ë‚´ë¼"
+                sourceSlotId: 3, // "3¹ø ½½·Ô¿¡¼­ ²¨³»¶ó"
                 destination: {
                     rackId: "Rack(4,7)",
                     itemType: "C",
@@ -85,10 +85,10 @@ async function createTaskDocuments() {
     };
 
     // ==========================================================
-    // ì‹œë‚˜ë¦¬ì˜¤ 2: ë‹¤ì¤‘ ì¶œê³  (Multi-Outbound) Task
+    // ½Ã³ª¸®¿À 2: ´ÙÁß Ãâ°í (Multi-Outbound) Task
     // ==========================================================
-    // ë™ 2ê°œ(Rack(2,1), Rack(3,8))ì—ì„œ ì•„ì´í…œì„ ê°ê° 1, 2ë²ˆ ìŠ¬ë¡¯ì— ì‹£ê³ ,
-    // ì¶œê³  ìŠ¤í…Œì´ì…˜(outbound_station_01)ìœ¼ë¡œ ìš´ë°˜í•˜ëŠ” ì„ë¬´
+    // ·¢ 2°³(Rack(2,1), Rack(3,8))¿¡¼­ ¾ÆÀÌÅÛÀ» °¢°¢ 1, 2¹ø ½½·Ô¿¡ ½Æ°í,
+    // Ãâ°í ½ºÅ×ÀÌ¼Ç(outbound_station_01)À¸·Î ¿î¹İÇÏ´Â ÀÓ¹«
     const multiOutboundTask = {
         type: "multi_outbound",
         stops: [
@@ -119,24 +119,24 @@ async function createTaskDocuments() {
         ]
     };
 
-    // --- ìƒì„±í•  ëª¨ë“  Taskë¥¼ ë°°ì—´ì— ë‹´ê¸° ---
+    // --- »ı¼ºÇÒ ¸ğµç Task¸¦ ¹è¿­¿¡ ´ã±â ---
     const allTasks = [multiInboundTask, multiOutboundTask];
 
-    // --- ê³µí†µ í•„ë“œ ì¶”ê°€ ë° ë¬¸ì„œ ìƒì„± ---
+    // --- °øÅë ÇÊµå Ãß°¡ ¹× ¹®¼­ »ı¼º ---
     for (const task of allTasks) {
         const taskData = {
             ...task,
             status: "pending",
-            assignedAmrId: null,
+            assignedAcrId: null,
             createdAt: Timestamp.now(),
             completedAt: null
         };
 
         try {
             const docRef = await tasksCollectionRef.add(taskData);
-            console.log(`'${task.type}' Task '${docRef.id}' ë¬¸ì„œ ìƒì„± ì„±ê³µ!`);
+            console.log(`'${task.type}' Task '${docRef.id}' ¹®¼­ »ı¼º ¼º°ø!`);
         } catch (error) {
-            console.error(`Task ë¬¸ì„œ ìƒì„± ì¤‘ ì˜¤ë¥˜ ë°œìƒ:`, error);
+            console.error(`Task ¹®¼­ »ı¼º Áß ¿À·ù ¹ß»ı:`, error);
         }
     }
 }

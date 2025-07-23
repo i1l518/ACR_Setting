@@ -136,7 +136,7 @@ public class TaskManager : MonoBehaviour
         var newTaskData = new Dictionary<string, object>
     {
         { "type", "multi_inbound" }, { "stops", stops }, { "status", "pending" },
-        { "assignedAmrId", null }, { "createdAt", Timestamp.GetCurrentTimestamp() }, { "completedAt", null }
+        { "assignedAcrId", null }, { "createdAt", Timestamp.GetCurrentTimestamp() }, { "completedAt", null }
     };
 
         yield return StartCoroutine(CreateTaskDocument(newTaskData, (newTaskRef) => {
@@ -247,7 +247,7 @@ public class TaskManager : MonoBehaviour
         var newTaskData = new Dictionary<string, object>
         {
             { "type", "multi_outbound" }, { "stops", stops }, { "status", "pending" },
-            { "assignedAmrId", null }, { "createdAt", Timestamp.GetCurrentTimestamp() }, { "completedAt", null }
+            { "assignedAcrId", null }, { "createdAt", Timestamp.GetCurrentTimestamp() }, { "completedAt", null }
         };
 
         // 헬퍼를 사용하여 Task 생성 후, 콜백으로 ACR 할당 함수 호출

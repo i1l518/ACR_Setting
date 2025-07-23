@@ -15,10 +15,9 @@ public class RackData
     [FirestoreProperty]
     public int status { get; set; }
 
-    // <<<--- 이 부분을 추가해주세요 ---
+
     [FirestoreProperty]
     public string itemType { get; set; }
-    // --- 여기까지 추가 ---
 
     [FirestoreDocumentId]
     public string DocumentId { get; set; }

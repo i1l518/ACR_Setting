@@ -70,13 +70,13 @@ public class ACR_PhysicalController : MonoBehaviour
         Debug.Log("7단계 (내부 적재 공간으로 전진) 완료!");
 
         // 8단계: 적재 (박스 놓기)
-        grabController.Release(); // "놔!" 명령
+        grabController.Release(gripperController.boxparents);
         Debug.Log("8단계 (적재) 완료!");
         yield return new WaitForSeconds(0.5f);
 
-        // 9단계: Gripper 후진 (원위치로)
+        // 9단계: Gripper 슬라이더 후진
         yield return StartCoroutine(gripperController.SlideGripperSequence(-slideDistanceToStorage));
-        Debug.Log("9단계 (내부 적재 공간에서 후진) 완료!");
+        Debug.Log("9단계 (후진) 완료!");
 
         Debug.Log("--- 모든 물리 작업 완료! ACRController에게 보고합니다. ---");
         ACREvents.RaiseOnActionCompleted(this.acrId);

@@ -9,6 +9,7 @@ public class GripperController : MonoBehaviour
     public Transform gripperSlider;      // Gripper_Slider
     public Transform gripperLeft;        // Gripper
     public Transform gripperRight;       // Gripper (1)
+    public Transform boxparents;
 
     [Header("제어 파라미터")]
     public float liftSpeed = 0.5f;

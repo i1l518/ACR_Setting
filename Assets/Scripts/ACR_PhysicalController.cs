@@ -1,34 +1,49 @@
 // 파일명: ACR_PhysicalController.cs
-using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System;
+using System.Linq;
+using UnityEngine;
 
-/*
-// Pickup 작업을 정의하는 클래스 (IPhysicalAction 인터페이스를 구현)
-public class PickupAction : IPhysicalAction
-{
-    private ACR_PhysicalController physicalController;
 
-    public PickupAction(ACR_PhysicalController controller)
-    {
-        this.physicalController = controller;
-    }
-
-    public IEnumerator Execute(Dictionary<string, object> stopData)
-    {
-        // 기존 PickupSequence 코드를 그대로 여기에 붙여넣습니다.
-        // 단, 마지막 줄은 수정합니다.
-        Debug.Log($"--- [{physicalController.acrId}] 물품 회수(Pickup) 시퀀스 시작 ---");
-        // ... (1단계부터 9단계까지의 모든 로직) ...
-        yield return new WaitForSeconds(0.5f);
-        Debug.Log($"--- [{physicalController.acrId}] 모든 물리 작업 완료! ---");
-        // 이 코루틴이 끝나면 자동으로 제어권이 ACRController에게 돌아갑니다.
-    }
-}*/
 
 public class ACR_PhysicalController : MonoBehaviour
 {
+    [System.Serializable] // 인스펙터에서 보려면 추가
+    public class StorageSlot
+    {
+        public int SlotId { get; private set; }
+        public Transform SlotTransform { get; private set; }
+        public GameObject StoredBoxObject { get; private set; }
+        public string StoredBoxId { get; private set; } // 박스의 고유 ID (가장 중요!)
+
+        public bool IsEmpty => StoredBoxObject == null;
+
+        public StorageSlot(int id, Transform transform)
+        {
+            this.SlotId = id;
+            this.SlotTransform = transform;
+        }
+
+        public void StoreBox(GameObject boxObject, string boxId)
+        {
+            StoredBoxObject = boxObject;
+            StoredBoxId = boxId;
+            // 물리적 부모-자식 관계 설정
+            boxObject.transform.SetParent(SlotTransform, true);
+            boxObject.transform.localPosition = Vector3.zero;
+            boxObject.transform.localRotation = Quaternion.identity;
+        }
+
+        public GameObject ReleaseBox()
+        {
+            GameObject boxToRelease = StoredBoxObject;
+            StoredBoxObject = null;
+            StoredBoxId = null;
+            return boxToRelease;
+        }
+    }
+
     [Header("ACR 고유 ID")]
     public string acrId; // Inspector에서 각 ACR마다 고유 ID를 반드시 설정해줘야 합니다. (예: acr_01, acr_02)
 
@@ -39,67 +54,68 @@ public class ACR_PhysicalController : MonoBehaviour
     // ★★★ 1. 새로운 변수 추가 ★★★
     [Header("보관소 설정")]
     [Tooltip("ACR 내부의 보관소 위치들. 아래쪽 슬롯부터 순서대로 할당하세요.")]
-    public List<Transform> storageSlots; // Inspector에서 슬롯 Transform들을 연결
+    public List<Transform> storageSlotTransforms; // Inspector에서 슬롯 Transform들을 연결
+
+    private StorageSlot[] internalStorage;
 
     [Tooltip("각 슬롯이 비어있는지 확인할 때 사용할 감지 상자의 크기")]
-    public Vector3 checkBoxSize = new Vector3(0.5f, 0.5f, 0.5f);
+    public Vector3 checkBoxSize = new Vector3(0.75f, 0.55f, 0.85f);
 
     [Tooltip("박스(Box) 오브젝트들이 속한 레이어")]
     public LayerMask boxLayer;
 
-    // ★★★ 2. 신규 함수 작성: FindEmptyStorageSlot ★★★
-    /// <summary>
-    /// 비어있는 보관소 슬롯을 찾습니다.
-    /// </summary>
-    /// <param name="preferredSlotIndex">우선적으로 확인하고 싶은 슬롯의 인덱스</param>
-    /// <returns>비어있는 슬롯의 Transform. 모두 찼으면 null을 반환합니다.</returns>
-    private Transform FindEmptyStorageSlot(float preferredWorldY)
+    void Awake()
     {
-        // 1. 가장 가까운 슬롯 찾기
-        Transform closestSlot = null;
-        float minDistance = float.MaxValue;
+        InitializeStorage();
+    }
 
-        // 모든 슬롯을 순회하며 preferredWorldY와 Y좌표 차이가 가장 작은 슬롯을 찾습니다.
-        foreach (Transform slot in storageSlots)
+    /// <summary>
+    /// 인스펙터에서 할당한 Transform들을 기반으로 내부 보관소 시스템을 초기화합니다.
+    /// </summary>
+    private void InitializeStorage()
+    {
+        internalStorage = new StorageSlot[storageSlotTransforms.Count];
+        for (int i = 0; i < storageSlotTransforms.Count; i++)
         {
-            float distance = Mathf.Abs(slot.position.y - preferredWorldY);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                closestSlot = slot;
-            }
+            internalStorage[i] = new StorageSlot(i, storageSlotTransforms[i]);
+        }
+        Debug.Log($"[{acrId}] {internalStorage.Length}개의 내부 보관소 초기화 완료.");
+    }
+
+    /// <summary>
+    /// 비어있는 논리적 보관소 슬롯을 찾습니다. (더 이상 Physics를 사용하지 않음)
+    /// </summary>
+    private StorageSlot FindEmptyStorageSlot(float preferredWorldY)
+    {
+        // Linq를 사용해 간단하게 표현
+        var emptySlots = internalStorage.Where(slot => slot.IsEmpty).ToList();
+
+        if (emptySlots.Count == 0)
+        {
+            Debug.LogError($"[{acrId}] 모든 보관소가 꽉 찼습니다!");
+            return null;
         }
 
-        // 2. 가장 가까운 슬롯(우선순위 슬롯)이 비어있는지 확인
-        if (closestSlot != null)
-        {
-            Collider[] colliders = new Collider[1];
-            int count = Physics.OverlapBoxNonAlloc(closestSlot.position, checkBoxSize / 2, colliders, closestSlot.rotation, boxLayer);
+        // 비어있는 슬롯 중 Y좌표가 가장 가까운 슬롯을 찾음
+        StorageSlot closestEmptySlot = emptySlots.OrderBy(slot => Mathf.Abs(slot.SlotTransform.position.y - preferredWorldY)).First();
 
-            if (count == 0) // 비어있다면
+        Debug.Log($"[{acrId}] 비어있는 슬롯 중 가장 가까운 슬롯 #{closestEmptySlot.SlotId}을(를) 선택합니다.");
+        return closestEmptySlot;
+    }
+
+    /// <summary>
+    /// 특정 ID를 가진 박스가 저장된 슬롯을 찾습니다.
+    /// </summary>
+    private StorageSlot FindSlotContainingBox(string boxId)
+    {
+        foreach (var slot in internalStorage)
+        {
+            if (!slot.IsEmpty && slot.StoredBoxId == boxId)
             {
-                Debug.Log($"[{acrId}] 박스를 꺼낸 높이와 가장 가까운 슬롯(Y={closestSlot.position.y})이 비어있어 선택합니다.");
-                return closestSlot;
+                return slot;
             }
         }
-
-        // 3. 우선순위 슬롯이 차 있다면, 0번부터 순서대로 빈 슬롯을 다시 찾습니다.
-        Debug.Log($"[{acrId}] 우선순위 슬롯이 차 있어서, 가장 아래부터 빈 슬롯을 다시 검색합니다.");
-        for (int i = 0; i < storageSlots.Count; i++)
-        {
-            Transform currentSlot = storageSlots[i];
-            Collider[] colliders = new Collider[1];
-            int count = Physics.OverlapBoxNonAlloc(currentSlot.position, checkBoxSize / 2, colliders, currentSlot.rotation, boxLayer);
-
-            if (count == 0) // 처음으로 발견된 빈 슬롯
-            {
-                Debug.Log($"[{acrId}] 비어있는 다음 슬롯 #{i}을(를) 찾아 선택합니다.");
-                return currentSlot;
-            }
-        }
-
-        // 4. 모든 슬롯이 꽉 찬 경우
-        Debug.LogError($"[{acrId}] 모든 보관소가 꽉 찼습니다! 적재할 공간이 없습니다.");
+        Debug.LogError($"[{acrId}] ID '{boxId}'를 가진 박스를 찾을 수 없습니다!");
         return null;
     }
 
@@ -149,7 +165,7 @@ public class ACR_PhysicalController : MonoBehaviour
 
         // 7단계: 비어있는 보관소 슬롯 찾기 및 위치로 이동
         // ★★★ 박스를 집어 올린 월드 높이(pickupWorldHeight)를 인자로 전달 ★★★
-        Transform targetSlot = FindEmptyStorageSlot(pickupWorldHeight);
+        StorageSlot targetSlot = FindEmptyStorageSlot(pickupWorldHeight);
 
         // 만약 빈 슬롯을 찾지 못했다면 시퀀스를 중단하고 에러 처리
         if (targetSlot == null)
@@ -158,21 +174,53 @@ public class ACR_PhysicalController : MonoBehaviour
             yield break;
         }
 
-        float targetLiftHeight = targetSlot.position.y - transform.position.y;
+        float targetLiftHeight = targetSlot.SlotTransform.position.y - transform.position.y;
         yield return StartCoroutine(gripperController.MoveLiftSequence(targetLiftHeight));
-        Debug.Log($"[{acrId}] 7단계 (슬롯 높이로 리프트 이동) 완료!");
+        Debug.Log($"[{this.acrId}] 7단계 (슬롯 높이로 리프트 이동) 완료!");
         yield return new WaitForSeconds(0.5f);
 
         // 8단계: 슬롯을 향해 Gripper 전진
-        Vector3 localPosInSlider = gripperController.transform.parent.InverseTransformPoint(targetSlot.position);
-        float slideDistanceToStorage = localPosInSlider.z;
+        Vector3 localPosInSlider = gripperController.transform.InverseTransformPoint(targetSlot.SlotTransform.position);
+        float slideDistanceToStorage = -localPosInSlider.z;
         yield return StartCoroutine(gripperController.SlideGripperSequence(slideDistanceToStorage));
         Debug.Log($"[{acrId}] 8단계 (슬롯으로 슬라이더 전진) 완료!");
 
         // 9단계: 적재 (박스 놓기)
-        grabController.Release();
-        Debug.Log($"[{this.acrId}] 9단계 (적재) 완료!");
-        yield return new WaitForSeconds(0.5f);
+        GameObject releasedBox = grabController.Release();
+
+        // 박스가 성공적으로 놓아졌는지 확인합니다.
+        if (releasedBox != null)
+        {
+            // (1) 박스의 고유 ID 가져오기
+            //    - 아래 코드는 박스 오브젝트에 BoxData.cs 스크립트가 있고,
+            //      그 안에 public string Id { get; } 프로퍼티가 있다고 가정한 예시입니다.
+            //    - 실제 프로젝트의 박스 ID 정책에 맞게 수정해야 합니다.
+            //    - 만약 BoxData 스크립트가 없다면, 임시로 releasedBox.name 등을 사용할 수 있습니다.
+
+            string boxId = "unknown_id"; // 기본값
+            BoxData boxData = releasedBox.GetComponent<BoxData>();
+            if (boxData != null)
+            {
+                boxId = boxData.Id;
+            }
+            else
+            {
+                Debug.LogWarning($"[{acrId}] 박스에 BoxData 컴포넌트가 없어 ID를 찾을 수 없습니다. 오브젝트 이름을 ID로 사용합니다.");
+                boxId = releasedBox.name; // 임시방편
+            }
+
+            // (2) 논리적 보관소(StorageSlot)에 박스 정보 저장
+            targetSlot.StoreBox(releasedBox, boxId);
+
+            Debug.Log($"[{acrId}] 9단계 (적재) 완료! 슬롯 #{targetSlot.SlotId}에 박스 '{boxId}'를 저장했습니다.");
+        }
+        else
+        {
+            // 이 경고가 뜬다면, Gripper가 박스를 놓으려고 했으나 실제로 잡고 있는 것이 없었다는 의미입니다.
+            Debug.LogWarning($"[{acrId}] 9단계 (적재) 실패: Release()가 호출되었지만 반환된 박스가 없습니다. 파지 단계에 문제가 있었을 수 있습니다.");
+        }
+
+        yield return new WaitForSeconds(0.5f); // 다음 단계를 위한 대기
 
         // 10단계: Gripper 후진 (원위치로)
         yield return StartCoroutine(gripperController.SlideGripperSequence(-slideDistanceToStorage));
@@ -192,6 +240,39 @@ public class ACR_PhysicalController : MonoBehaviour
         Debug.Log($"--- [{this.acrId}] Dropoff 작업 완료! ---");
     }
 
+    //감지영역 시각화
+    private void OnDrawGizmos()
+    {
+        // Application.isPlaying을 통해 현재 게임이 실행 중인지 확인합니다.
+        // 실행 중이고, internalStorage가 성공적으로 초기화되었다면...
+        if (Application.isPlaying && internalStorage != null)
+        {
+            // 런타임 데이터를 사용하여 각 슬롯의 상태를 시각화합니다.
+            foreach (StorageSlot slot in internalStorage)
+            {
+                // 슬롯의 Transform이 유효한지 확인합니다.
+                if (slot.SlotTransform != null)
+                {
+                    // ★★★ 슬롯이 비어있으면(IsEmpty) 녹색, 차있으면 빨간색으로 그립니다. ★★★
+                    Gizmos.color = slot.IsEmpty ? Color.green : Color.red;
+                    Gizmos.DrawWireCube(slot.SlotTransform.position, checkBoxSize);
+                }
+            }
+        }
+        // 게임이 실행 중이 아닐 때 (Edit 모드일 때)
+        else
+        {
+            // 인스펙터에 할당된 Transform 정보를 사용해 노란색으로 그립니다.
+            if (storageSlotTransforms == null) return;
 
-
+            Gizmos.color = Color.yellow;
+            foreach (Transform slotTransform in storageSlotTransforms)
+            {
+                if (slotTransform != null)
+                {
+                    Gizmos.DrawWireCube(slotTransform.position, checkBoxSize);
+                }
+            }
+        }
+    }
 }

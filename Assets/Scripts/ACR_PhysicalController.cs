@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using Firebase.Firestore;
+using System.Threading.Tasks;
 
 public class ACR_PhysicalController : MonoBehaviour
 {
@@ -9,7 +11,14 @@ public class ACR_PhysicalController : MonoBehaviour
     public string acrId = "acr_01";
     [Header("연결 컴포넌트")]
     public GripperController gripperController;
-    public GrabController grabController; // GrabController 참조 추가
+    public GrabController grabController;
+
+    private FirebaseFirestore db;
+
+    void Start()
+    {
+        FirebaseManager.OnFirebaseInitialized += () => { db = FirebaseManager.Instance.DB; };
+    }
 
     void OnEnable() { ACREvents.OnArrivedForAction += HandleArrivedForAction; }
     void OnDisable() { ACREvents.OnArrivedForAction -= HandleArrivedForAction; }
@@ -17,7 +26,10 @@ public class ACR_PhysicalController : MonoBehaviour
     private void HandleArrivedForAction(string id, string action, Dictionary<string, object> stopData)
     {
         if (id != this.acrId) return;
+        Debug.Log($"[{acrId}] 물리 제어기: '{action}' 작업을 위한 도착 신호 수신!");
+
         if (action == "pickup") StartCoroutine(PickupSequence(stopData));
+        else if (action == "dropoff") StartCoroutine(DropoffSequence(stopData));
         else ACREvents.RaiseOnActionCompleted(this.acrId);
     }
 
@@ -25,60 +37,48 @@ public class ACR_PhysicalController : MonoBehaviour
     {
         Debug.Log("--- 물품 회수(Pickup) 시퀀스 시작 ---");
 
-        // 1단계: 리프트 상승
+        var sourceMap = stopData["source"] as Dictionary<string, object>;
+        string gantryId = GetValueFromMap(sourceMap, "gantryId");
         float targetLocalHeight = 0f;
         try
         {
-            var locationMap = stopData["source"] as Dictionary<string, object>;
-            var posMap = locationMap["position"] as Dictionary<string, object>;
-            float targetWorldHeight = Convert.ToSingle(posMap["y"]);
-            targetLocalHeight = targetWorldHeight - transform.position.y;
+            var posMap = sourceMap["position"] as Dictionary<string, object>;
+            targetLocalHeight = Convert.ToSingle(posMap["y"]) - transform.position.y;
         }
-        catch (Exception e) { Debug.LogError($"목표 높이 파싱 실패: {e.Message}"); }
+        catch { }
+
+        // --- 물리적 작업 수행 ---
         yield return StartCoroutine(gripperController.MoveLiftSequence(targetLocalHeight));
-        Debug.Log($"1단계 (리프트 상승) 완료!");
-        yield return new WaitForSeconds(0.5f);
-
-        // 2단계: 턴테이블 회전 (랙 방향)
         yield return StartCoroutine(gripperController.RotateTurntableSequence(90f));
-        Debug.Log($"2단계 (턴테이블 회전) 완료!");
-        yield return new WaitForSeconds(0.5f);
-
-        // 3단계: Gripper 전진 (랙으로)
-        float slideDistanceToRack = 1.0f;
-        yield return StartCoroutine(gripperController.SlideGripperSequence(slideDistanceToRack));
-        Debug.Log($"3단계 (슬라이더 전진) 완료!");
-
-        // 4단계: 파지
-        grabController.Grab(); // "잡아!" 명령
-        Debug.Log("4단계 (파지) 완료!");
-        yield return new WaitForSeconds(1.0f); // 잡는 모션을 위한 딜레이
-
-        // 5단계: Gripper 후진 (박스를 가지고)
-        yield return StartCoroutine(gripperController.SlideGripperSequence(-slideDistanceToRack));
-        Debug.Log("5단계 (슬라이더 후진) 완료!");
-        yield return new WaitForSeconds(0.5f);
-
-        // 6단계: 턴테이블 원위치 (정면 방향)
+        yield return StartCoroutine(gripperController.SlideGripperSequence(1.0f));
+        grabController.Grab();
+        yield return new WaitForSeconds(1.0f);
+        yield return StartCoroutine(gripperController.SlideGripperSequence(-1.0f));
         yield return StartCoroutine(gripperController.RotateTurntableSequence(0f));
-        Debug.Log("6단계 (턴테이블 원위치) 완료!");
-        yield return new WaitForSeconds(0.5f);
+        yield return StartCoroutine(gripperController.SlideGripperSequence(0.8f));
+        grabController.Release(gripperController.liftMechanism); // liftfloor에 놓기
+        yield return StartCoroutine(gripperController.SlideGripperSequence(-0.8f));
 
-        // 7단계: Gripper 전진 (내부 적재 공간으로)
-        float slideDistanceToStorage = 0.8f;
-        yield return StartCoroutine(gripperController.SlideGripperSequence(slideDistanceToStorage));
-        Debug.Log("7단계 (내부 적재 공간으로 전진) 완료!");
-
-        // 8단계: 적재 (박스 놓기)
-        grabController.Release(gripperController.boxparents);
-        Debug.Log("8단계 (적재) 완료!");
-        yield return new WaitForSeconds(0.5f);
-
-        // 9단계: Gripper 슬라이더 후진
-        yield return StartCoroutine(gripperController.SlideGripperSequence(-slideDistanceToStorage));
-        Debug.Log("9단계 (후진) 완료!");
+        // --- Firebase 상태 업데이트 ---
+        Debug.Log($"Firebase의 {gantryId} 상태를 '비어있음(1)'으로 업데이트합니다.");
+        Task updateTask = UpdateGantryStatus_Full(gantryId, 1, "NONE"); // 1: Empty
+        yield return new WaitUntil(() => updateTask.IsCompleted);
 
         Debug.Log("--- 모든 물리 작업 완료! ACRController에게 보고합니다. ---");
         ACREvents.RaiseOnActionCompleted(this.acrId);
     }
+
+    private IEnumerator DropoffSequence(Dictionary<string, object> stopData) { /* ... 향후 구현 ... */ yield return null; }
+
+    private Task UpdateGantryStatus_Full(string gantryDocId, int newStatus, string newItemType)
+    {
+        if (db == null) return Task.CompletedTask;
+        DocumentReference gantryRef = db.Collection("Gantries").Document(gantryDocId);
+        Dictionary<string, object> updates = new Dictionary<string, object> {
+            { "status", newStatus },
+            { "itemType", newItemType }
+        };
+        return gantryRef.SetAsync(updates, SetOptions.MergeAll);
+    }
+    private string GetValueFromMap(Dictionary<string, object> dataMap, string key) => dataMap.TryGetValue(key, out object valueObj) ? valueObj.ToString() : string.Empty;
 }

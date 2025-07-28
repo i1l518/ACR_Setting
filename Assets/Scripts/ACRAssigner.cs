@@ -85,7 +85,7 @@ public class ACRAssigner : MonoBehaviour
         {
             Debug.Log($"[ACRAssigner] 성공적으로 ACR '{selectedAcrDoc.Id}'에게 Task '{taskRef.Id}'를 할당했습니다.");
             // 할당에 성공했으므로, Task 문서에도 어떤 ACR에게 할당되었는지 기록합니다.
-            Task updateTaskStatusTask = taskRef.UpdateAsync("assignedAmrId", selectedAcrDoc.Id);
+            Task updateTaskStatusTask = taskRef.UpdateAsync("assignedAcrId", selectedAcrDoc.Id);
             yield return new WaitUntil(() => updateTaskStatusTask.IsCompleted);
 
             if (updateTaskStatusTask.IsFaulted)

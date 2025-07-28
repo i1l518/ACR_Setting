@@ -5,9 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-
-
-
 public class ACR_PhysicalController : MonoBehaviour
 {
     [System.Serializable] // 인스펙터에서 보려면 추가
@@ -181,7 +178,7 @@ public class ACR_PhysicalController : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         // 8단계: 슬롯을 향해 Gripper 전진
-        Vector3 localPosInSlider = gripperController.transform.InverseTransformPoint(targetSlot.SlotTransform.position);
+        Vector3 localPosInSlider = gripperController.gripperSlider.InverseTransformPoint(targetSlot.SlotTransform.position);
         float slideDistanceToStorage = -localPosInSlider.z;
         yield return StartCoroutine(gripperController.SlideGripperSequence(slideDistanceToStorage));
         Debug.Log($"[{acrId}] 8단계 (슬롯으로 슬라이더 전진) 완료!");
@@ -232,13 +229,110 @@ public class ACR_PhysicalController : MonoBehaviour
         //ACREvents.RaiseActionCompleted(this.acrId);
     }
 
-    // 나중에 dropoff 기능이 필요하면 여기에 추가하면 됩니다.
     public IEnumerator DropoffSequence(Dictionary<string, object> stopData)
     {
-        Debug.Log($"--- [{this.acrId}] 물품 하역(Dropoff) 시퀀스 시작 ---");
-        // ... Dropoff 로직 ...
-        yield return new WaitForSeconds(1.0f);
-        Debug.Log($"--- [{this.acrId}] Dropoff 작업 완료! ---");
+        Debug.Log($"--- [{this.acrId}] 전체 물품 하역(Dropoff) 시퀀스 시작 ---");
+
+        // 1. 목적지(outbound_station) 정보 파싱
+        Transform outboundStation = null;
+        try
+        {
+            // 이 부분은 실제 `stopData` 구조에 맞게 수정해야 합니다.
+            // 여기서는 예시로 "outbound_station_01" 같은 이름의 오브젝트를 찾는다고 가정합니다.
+            string stationName = stopData["destination_name"] as string;
+            outboundStation = GameObject.Find(stationName)?.transform;
+
+            if (outboundStation == null)
+            {
+                Debug.LogError($"목적지 스테이션 '{stationName}'을 찾을 수 없습니다! Dropoff 시퀀스를 중단합니다.");
+                yield break;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"목적지 정보 파싱 실패: {e.Message}");
+            yield break;
+        }
+
+        // 2. 보관소에 있는 모든 박스를 순회하며 하역 작업 반복
+        //    Linq를 사용해 박스가 있는 슬롯만 필터링합니다.
+        var filledSlots = internalStorage.Where(slot => !slot.IsEmpty).ToList();
+
+        if (filledSlots.Count == 0)
+        {
+            Debug.LogWarning($"[{acrId}] 보관소에 하역할 박스가 없습니다. 시퀀스를 종료합니다.");
+            yield break;
+        }
+
+        Debug.Log($"[{acrId}] 총 {filledSlots.Count}개의 박스를 하역합니다.");
+
+        foreach (StorageSlot sourceSlot in filledSlots)
+        {
+            Debug.Log($"--- 슬롯 #{sourceSlot.SlotId}의 박스 '{sourceSlot.StoredBoxId}' 하역 시작 ---");
+
+            // === 서브 시퀀스: 박스 꺼내기 (Pickup의 역순) ===
+
+            // A. 박스가 있는 슬롯 높이로 리프트 이동
+            float liftHeightToGrab = sourceSlot.SlotTransform.position.y - transform.position.y;
+            yield return StartCoroutine(gripperController.MoveLiftSequence(liftHeightToGrab));
+            yield return new WaitForSeconds(0.5f);
+
+            // B. 슬롯을 향해 Gripper 전진
+            Vector3 localPosToSlot = gripperController.gripperSlider.InverseTransformPoint(sourceSlot.SlotTransform.position);
+            float slideDistToGrab = localPosToSlot.z;
+            yield return StartCoroutine(gripperController.SlideGripperSequence(slideDistToGrab));
+
+            // C. 박스 파지
+            grabController.Grab(); // 이 시점에는 슬롯에 있는 박스만 감지되어야 함
+            yield return new WaitForSeconds(1.0f);
+
+            // D. 논리적 상태 업데이트: 보관소에서 박스 제거
+            GameObject boxToMove = sourceSlot.ReleaseBox();
+            if (boxToMove == null)
+            {
+                Debug.LogError($"심각한 오류: 슬롯 #{sourceSlot.SlotId}이 비어있지 않다고 판단했으나, ReleaseBox()가 null을 반환했습니다. 시퀀스를 중단합니다.");
+                yield break;
+            }
+            Debug.Log($"[{acrId}] 슬롯 #{sourceSlot.SlotId}에서 박스를 성공적으로 꺼냈습니다.");
+
+
+            // E. Gripper 후진
+            yield return StartCoroutine(gripperController.SlideGripperSequence(-slideDistToGrab));
+            yield return new WaitForSeconds(0.5f);
+
+            // === 서브 시퀀스: 박스 내려놓기 (Pickup과 유사) ===
+
+            // F. 목적지 스테이션 높이로 리프트 이동
+            float liftHeightToDrop = outboundStation.position.y - transform.position.y;
+            yield return StartCoroutine(gripperController.MoveLiftSequence(liftHeightToDrop));
+            yield return new WaitForSeconds(0.5f);
+
+            // G. 목적지 스테이션 방향으로 턴테이블 회전 (예: -90도 또는 270도)
+            //    이 각도는 스테이션의 위치에 따라 달라져야 합니다. 
+            //    여기서는 임시로 -90도로 가정합니다.
+            yield return StartCoroutine(gripperController.RotateTurntableSequence(-90f));
+            yield return new WaitForSeconds(0.5f);
+
+            // H. 목적지를 향해 Gripper 전진
+            Vector3 localPosToStation = gripperController.gripperSlider.InverseTransformPoint(outboundStation.position);
+            float slideDistToDrop = localPosToStation.z;
+            yield return StartCoroutine(gripperController.SlideGripperSequence(slideDistToDrop));
+
+            // I. 박스 놓기
+            grabController.Release();
+            Debug.Log($"[{acrId}] 목적지 스테이션에 박스 '{boxToMove.name}'을(를) 내려놓았습니다.");
+            yield return new WaitForSeconds(0.5f);
+
+            // J. Gripper 후진
+            yield return StartCoroutine(gripperController.SlideGripperSequence(-slideDistToDrop));
+            yield return new WaitForSeconds(0.5f);
+
+            // K. 턴테이블 원위치 (다음 작업을 위해)
+            yield return StartCoroutine(gripperController.RotateTurntableSequence(0f));
+        }
+
+        Debug.Log($"--- [{this.acrId}] 모든 물품 하역(Dropoff) 완료! ---");
+        //ACREvents.RaiseActionCompleted(this.acrId); // 관제소에 작업 완료 보고
     }
 
     //감지영역 시각화

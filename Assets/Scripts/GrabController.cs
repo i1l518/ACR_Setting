@@ -31,7 +31,8 @@ public class GrabController : MonoBehaviour
             Vector3 originalScale = heldBox.lossyScale;
 
             // 2. 박스의 부모를 변경합니다.
-            heldBox.SetParent(this.transform);
+            heldBox.SetParent(this.transform.parent);
+            
 
             // 3. 부모의 월드 스케일(lossyScale)을 가져옵니다.
             Vector3 parentScale = this.transform.lossyScale;
@@ -39,35 +40,40 @@ public class GrabController : MonoBehaviour
             // 4. 박스의 새로운 로컬 스케일을 계산합니다.
             //    (원하는 월드 스케일) / (부모의 월드 스케일) = (설정해야 할 로컬 스케일)
             //    Vector3는 컴포넌트별 나눗셈을 지원합니다.
-            heldBox.localScale = new Vector3(
-                originalScale.x / parentScale.x,
-                originalScale.y / parentScale.y,
-                originalScale.z / parentScale.z
-            );
+            //heldBox.localScale = new Vector3(
+            //    originalScale.x / parentScale.x,
+            //    originalScale.y / parentScale.y,
+            //    originalScale.z / parentScale.z
+            //);
 
             // 5. 위치와 회전을 기준점에 맞춥니다.
             if (grabAnchor != null)
             {
                 heldBox.position = grabAnchor.position;
-                heldBox.rotation = grabAnchor.rotation;
+                //heldBox.rotation = grabAnchor.rotation;
             }
             else
             {
                 heldBox.localPosition = Vector3.zero;
-                heldBox.localRotation = Quaternion.identity;
+                //heldBox.localRotation = Quaternion.identity;
             }
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+            heldBox.transform.localRotation = Quaternion.Euler(90, 0, 0);
             detectedBox = null;
         }
         // ... (else 부분은 이전과 동일) ...
     }
 
-    public void Release()
-    { /* 이전과 동일 */
+    // GrabController.cs
+    public void Release() // 파라미터를 받지 않도록 변경
+    {
         if (heldBox != null)
         {
+            Debug.Log($"[GrabController] {heldBox.name} 놓기 실행!");
+
+            // 부모를 월드(null)로 설정하여 독립적인 오브젝트로 만듭니다.
             heldBox.SetParent(null, true);
+
             heldBox = null;
         }
     }

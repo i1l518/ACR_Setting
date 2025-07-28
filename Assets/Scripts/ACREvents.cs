@@ -1,7 +1,11 @@
-// ACREvents.cs (이 코드로 파일을 업데이트하거나 새로 만드세요)
+/*
+// 파일명: ACREvents.cs
 using System;
 using System.Collections.Generic;
 
+/// <summary>
+/// 모든 ACR 관련 통신을 중재하는 중앙 관제소(정적 이벤트 디스패처)입니다.
+/// </summary>
 public static class ACREvents
 {
     /// <summary>
@@ -10,7 +14,7 @@ public static class ACREvents
     /// 파라미터: (어떤 ACR이, 어떤 액션을 위해, 어떤 경유지 정보로 도착했는가)
     /// </summary>
     public static event Action<string, string, Dictionary<string, object>> OnArrivedForAction;
-    public static void RaiseOnArrivedForAction(string acrId, string action, Dictionary<string, object> stopData)
+    public static void RaiseArrivedForAction(string acrId, string action, Dictionary<string, object> stopData)
     {
         OnArrivedForAction?.Invoke(acrId, action, stopData);
     }
@@ -21,8 +25,9 @@ public static class ACREvents
     /// 파라미터: (작업을 완료한 ACR의 ID)
     /// </summary>
     public static event Action<string> OnActionCompleted;
-    public static void RaiseOnActionCompleted(string acrId)
+    public static void RaiseActionCompleted(string acrId)
     {
         OnActionCompleted?.Invoke(acrId);
     }
 }
+*/

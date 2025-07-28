@@ -10,6 +10,18 @@ using System.Collections.Generic;
 [RequireComponent(typeof(NavMeshAgent), typeof(NavMeshObstacle))]
 public class ACRController : MonoBehaviour
 {
+    // ★★★ 핵심 1: Delegate 타입 선언 ★★★
+    // Dictionary와 IEnumerator를 받는 메소드를 담을 수 있는 '틀'을 정의합니다.
+    public delegate IEnumerator PhysicalActionDelegate(Dictionary<string, object> stopData);
+
+    // ★★★ 핵심 2: 액션 등록을 위한 Dictionary 선언 ★★★
+    // 문자열 키("pickup")와 실제 실행될 메소드를 짝지어 저장합니다.
+    private Dictionary<string, PhysicalActionDelegate> actionRegistry;
+
+    // --- 컴포넌트 링크 ---
+    [Header("Component Links")]
+    public ACR_PhysicalController physicalController; // Inspector에서 연결
+
     // --- 컴포넌트 변수 ---
     private NavMeshAgent agent;         // ACR의 이동 및 경로 탐색을 담당하는 컴포넌트
     private NavMeshObstacle obstacle;       // ACR이 멈춰있을 때 다른 ACR이 피해가도록 하는 장애물 컴포넌트
@@ -26,8 +38,14 @@ public class ACRController : MonoBehaviour
     private DocumentReference acrDocRef;    // 이 ACR의 Firebase 문서에 대한 참조
     private ListenerRegistration listener;      // Firebase 데이터 변경을 실시간으로 감지하는 리스너
     private bool isWorking = false;             // 현재 작업(Task)을 수행 중인지 여부를 나타내는 플래그
+
+    //private bool isFirstMove = true;
     private string currentTaskId;               // 현재 수행 중인 Task의 ID
     private bool isPhysicalActionInProgress = false; // <<<--- 물리 작업이 진행 중인지 확인하는 플래그
+
+    [Header("Navigation Settings")]
+    [Tooltip("NavMeshObstacle의 Carving Time과 동일한 값으로 설정하세요. NavMesh 복구를 기다리는 시간입니다.")]
+    public float navMeshCarveTime = 0.1f;
 
     //================================================================
     // 1. Unity 생명주기 함수들: 스크립트의 초기화 및 해제 담당
@@ -41,23 +59,58 @@ public class ACRController : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         obstacle = GetComponent<NavMeshObstacle>();
+        physicalController = GetComponentInChildren<ACR_PhysicalController>(); // 자식에서 찾아옴
+        
+        // Inspector 연결을 확인하고, 액션 등록부를 초기화합니다.
+        if (physicalController == null)
+        {
+            Debug.LogError($"[{acrId}] ACR_PhysicalController가 Inspector에 연결되지 않았습니다!");
+        }
+        InitializeActionRegistry();
+
         FirebaseManager.OnFirebaseInitialized += HandleFirebaseInitialized;
 
-        // <<<--- '작업 완료' 이벤트를 구독합니다. ---
-        ACREvents.OnActionCompleted += HandleActionCompleted;
+        //// <<<--- '작업 완료' 이벤트를 구독합니다. ---
+        //ACREvents.OnActionCompleted += HandleActionCompleted;
     }
+
+    /// <summary>
+    /// 액션 이름과 실제 실행할 메소드를 연결하는 '전화번호부'를 만듭니다.
+    /// </summary>
+    private void InitializeActionRegistry()
+    {
+        actionRegistry = new Dictionary<string, PhysicalActionDelegate>();
+
+        // "pickup"이라는 키워드가 오면, physicalController의 PickupSequence 메소드를 실행하도록 연결합니다.
+        if (physicalController != null)
+        {
+            actionRegistry["pickup"] = physicalController.PickupSequence;
+            actionRegistry["dropoff"] = physicalController.DropoffSequence; // dropoff도 미리 등록
+            // 나중에 다른 액션이 추가되면 여기에 계속 등록하면 됩니다.
+            // actionRegistry["charge"] = physicalController.ChargeSequence;
+        }
+    }
+
+
     /// <summary>
     /// 첫 번째 프레임 업데이트 전에 한 번 호출됩니다.
     /// Awake 이후에 호출되며, 다른 스크립트와의 상호작용이 필요할 때 사용됩니다.
     /// </summary>
-    void Start()
+    IEnumerator Start()
     {
         if (homePosition == null)
         {
             Debug.LogError($"[{acrId}] Home Position이 설정되지 않았습니다! Inspector에서 할당해주세요.");
+            // homePosition이 없으면 더 이상 진행하지 않도록 합니다.
+            yield break;
         }
-        // 시작 시에는 움직이지 않는 장애물(Obstacle) 역할만 하도록 설정합니다.
-        SwitchToObstacle();
+
+        agent.enabled = true;
+        obstacle.enabled = false;
+
+        // 3. (선택사항, 하지만 권장) Obstacle이 완전히 자리를 잡을 때까지 안전하게 기다립니다.
+        // 이전의 "첫 실행" 버그를 예방하는 차원에서 남겨두는 것이 좋습니다.
+        yield return new WaitForSeconds(navMeshCarveTime);
     }
 
     /// <summary>
@@ -69,8 +122,8 @@ public class ACRController : MonoBehaviour
         FirebaseManager.OnFirebaseInitialized -= HandleFirebaseInitialized;
         listener?.Stop();
 
-        // <<<--- 이벤트 구독을 반드시 해제합니다. ---
-        ACREvents.OnActionCompleted -= HandleActionCompleted;
+        //// <<<--- 이벤트 구독을 반드시 해제합니다. ---
+        //ACREvents.OnActionCompleted -= HandleActionCompleted;
     }
     //================================================================
     // 2. Firebase 리스너 설정: ACR의 '귀' 역할
@@ -146,10 +199,24 @@ public class ACRController : MonoBehaviour
                 yield return StartCoroutine(MoveAndRotateForAction(stop, action));
 
                 // --- 2. '도착 신호' 보내고 '완료 신호' 대기 ---
-                SwitchToObstacle(); // 물리 작업 중에는 장애물 역할
+                yield return StartCoroutine(SwitchToObstacleCoroutine()); // 물리 작업 중에는 장애물 역할
 
-                isPhysicalActionInProgress = true; // 대기 시작
-                ACREvents.RaiseOnArrivedForAction(this.acrId, action, stop); // "도착했으니 작업 시작해!" 신호 전송
+                // ★★★ 핵심 3: Dictionary에서 메소드를 찾아 직접 실행 ★★★
+                // 더 이상 이벤트나 상태 변수, WaitUntil을 사용하지 않습니다.
+                if (actionRegistry.TryGetValue(action, out PhysicalActionDelegate actionToExecute))
+                {
+                    Debug.Log($"[{acrId}] 물리 작업({action})을 시작합니다...");
+                    // 찾아온 메소드(Delegate)를 코루틴으로 실행하고 끝날 때까지 기다립니다.
+                    yield return StartCoroutine(actionToExecute(stop));
+                    Debug.Log($"[{acrId}] 물리 작업({action})이 완료되었습니다.");
+                }
+                else
+                {
+                    Debug.Log($"[{acrId}] 등록되지 않았거나 물리 작업이 없는 액션({action})입니다.");
+                }
+
+                //isPhysicalActionInProgress = true; // 대기 시작
+                //ACREvents.RaiseArrivedForAction(this.acrId, action, stop); // "도착했으니 작업 시작해!" 신호 전송
 
                 Debug.Log($"[{acrId}] 물리 작업 제어권을 넘기고 완료 신호를 대기합니다...");
                 yield return new WaitUntil(() => !isPhysicalActionInProgress); // 대기 종료
@@ -227,19 +294,46 @@ public class ACRController : MonoBehaviour
     /// </summary>
     private IEnumerator MoveToTarget(Vector3 targetPosition)
     {
-        SwitchToAgent();
+        // <<<--- 수정 1: 목표 위치의 y값을 0으로 강제합니다. ---
+        Vector3 finalTargetPosition = new Vector3(targetPosition.x, 0, targetPosition.z);
 
-        Vector3 direction = (targetPosition - transform.position).normalized;
+        //// ★★★ 핵심 2: 첫 번째 이동일 경우에만 특별 초기화 로직 수행 ★★★
+        //if (isFirstMove)
+        //{
+        //    Debug.Log($"[{acrId}] 첫 번째 이동을 감지했습니다. 특별 동기화를 시작합니다.");
+        //    // Agent를 활성화하고, Warp를 통해 현재 위치를 강제 동기화합니다.
+        //    // 이 시점은 Start()보다 훨씬 뒤이므로 NavMesh 시스템이 준비되었을 확률이 높습니다.
+        //    if (!agent.enabled) agent.enabled = true;
+        //    agent.Warp(transform.position);
+
+        //    // 다음 이동부터는 이 로직을 실행하지 않도록 플래그를 변경합니다.
+        //    isFirstMove = false;
+
+        //    // 안전을 위해 한 프레임 대기하여 Warp가 완전히 적용되도록 합니다.
+        //    yield return null;
+        //}
+        // 1. 이동을 시작하기 전에 Agent 모드로 먼저 전환합니다.
+        yield return StartCoroutine(SwitchToAgentCoroutine());
+
+        // 2. 다음 목적지를 향해 부드럽게 회전합니다.
+        // 회전 방향 계산에도 y값이 0인 좌표를 사용합니다.
+        Vector3 direction = (finalTargetPosition - transform.position).normalized;
         if (direction.sqrMagnitude > 0.001f)
         {
             float targetYAngle = Quaternion.LookRotation(direction).eulerAngles.y;
             yield return StartCoroutine(RotateTowards(targetYAngle));
         }
 
+        // 3. 상태를 'moving'으로 업데이트합니다.
         Task updateStatusTask = UpdateStatus("moving");
         yield return new WaitUntil(() => updateStatusTask.IsCompleted);
 
-        agent.SetDestination(targetPosition);
+        // 4. 회전이 끝난 후, 이동을 시작합니다.
+        agent.isStopped = false;
+        // SetDestination에도 y값이 0인 좌표를 전달합니다.
+        agent.SetDestination(finalTargetPosition);
+
+        // 5. 도착할 때까지 대기합니다.
         yield return new WaitUntil(() => HasArrived());
     }
 
@@ -255,7 +349,7 @@ public class ACRController : MonoBehaviour
         // yield return StartCoroutine(RotateTowards(0));
 
         Debug.Log($"[{acrId}] 시작 지점 도착. 대기 상태로 전환합니다.");
-        SwitchToObstacle();
+        yield return StartCoroutine(SwitchToObstacleCoroutine());
         Task idleTask = UpdateStatus("idle");
         yield return new WaitUntil(() => idleTask.IsCompleted);
     }
@@ -293,23 +387,52 @@ public class ACRController : MonoBehaviour
     /// <summary>
     /// AMR을 '이동 가능한 Agent' 모드로 전환합니다.
     /// </summary>
-    private void SwitchToAgent()
+    private IEnumerator SwitchToAgentCoroutine()
     {
-        if (obstacle != null && obstacle.enabled) obstacle.enabled = false;
-        if (agent != null && !agent.enabled) agent.enabled = true;
+        // 1. Obstacle을 먼저 비활성화하여 NavMesh 복구를 시작합니다.
+        if (obstacle.enabled)
+        {
+            obstacle.enabled = false;
+        }
+
+        // NavMesh 복구 시간을 Obstacle의 Carving Time에 맞춰주면 더욱 안정적입니다.
+        // Carving Time이 0이면 한 프레임만 기다려도 충분합니다.
+        if (navMeshCarveTime > 0)
+        {
+            yield return new WaitForSeconds(navMeshCarveTime);
+        }
+        else
+        {
+            yield return new WaitForEndOfFrame();
+        }
+
+        if (!agent.enabled)
+        {
+            agent.enabled = true;
+        }
     }
 
     /// <summary>
     /// AMR을 '정지한 장애물' 모드로 전환합니다.
     /// </summary>
-    private void SwitchToObstacle()
+    private IEnumerator SwitchToObstacleCoroutine()
     {
-        if (agent != null && agent.enabled)
+        // 1. Agent의 움직임을 멈추고 비활성화합니다.
+        if (agent.enabled)
         {
             if (agent.hasPath) agent.ResetPath();
+            agent.isStopped = true; // isStopped를 먼저 설정하는 것이 안전합니다.
             agent.enabled = false;
         }
-        if (obstacle != null && !obstacle.enabled) obstacle.enabled = true;
+
+        // 2. ★★★ 핵심: Agent가 시스템에서 완전히 제거될 시간을 줍니다. ★★★
+        yield return new WaitForEndOfFrame();
+
+        // 3. Agent가 사라진 후, Obstacle을 안전하게 활성화합니다.
+        if (!obstacle.enabled)
+        {
+            obstacle.enabled = true;
+        }
     }
 
     /// <summary>
@@ -365,7 +488,12 @@ public class ACRController : MonoBehaviour
     /// </summary>
     private IEnumerator RotateTowards(float targetYAngle)
     {
-        agent.isStopped = true; 
+        if (agent.enabled)
+        {
+            agent.isStopped = true;
+        }
+
+        yield return null;
 
         Quaternion targetRotation = Quaternion.Euler(0, targetYAngle, 0);
 
@@ -377,7 +505,5 @@ public class ACRController : MonoBehaviour
 
         transform.rotation = targetRotation;
         Debug.Log($"목표 방향({targetYAngle}도)으로 회전 완료.");
-
-        agent.isStopped = false; // 이동을 다시 허용합니다.
     }
 }

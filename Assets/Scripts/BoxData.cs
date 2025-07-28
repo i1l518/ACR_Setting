@@ -1,6 +1,7 @@
 // 파일명: BoxData.cs
 using UnityEngine;
 
+
 /// <summary>
 /// 개별 박스 오브젝트에 부착하여 고유 데이터(ID 등)를 관리하는 컴포넌트입니다.
 /// </summary>

@@ -10,6 +10,14 @@ public class FirebaseManager : MonoBehaviour
 
     public FirebaseFirestore DB { get; private set; }
 
+    public TaskManager TaskManager
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
     // "초기화가 완료되었습니다" 라는 방송을 내보낼 이벤트
     public static event Action OnFirebaseInitialized;
 

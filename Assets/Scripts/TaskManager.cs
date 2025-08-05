@@ -15,6 +15,22 @@ public class TaskManager : MonoBehaviour
 
     private FirebaseFirestore db;
 
+    public StationMonitor StationMonitor
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
+    public OutboundRequestUI OutboundRequestUI
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
     void Start()
     {
         if (acrAssigner == null)
@@ -24,7 +40,8 @@ public class TaskManager : MonoBehaviour
             return;
         }
 
-        FirebaseManager.OnFirebaseInitialized += () => {
+        FirebaseManager.OnFirebaseInitialized += () =>
+        {
             db = FirebaseManager.Instance.DB;
         };
     }
@@ -139,7 +156,8 @@ public class TaskManager : MonoBehaviour
         { "assignedAcrId", null }, { "createdAt", Timestamp.GetCurrentTimestamp() }, { "completedAt", null }
     };
 
-        yield return StartCoroutine(CreateTaskDocument(newTaskData, (newTaskRef) => {
+        yield return StartCoroutine(CreateTaskDocument(newTaskData, (newTaskRef) =>
+        {
             if (newTaskRef != null)
             {
                 acrAssigner.AssignTaskToIdleAcr(newTaskRef);
@@ -251,7 +269,8 @@ public class TaskManager : MonoBehaviour
         };
 
         // 헬퍼를 사용하여 Task 생성 후, 콜백으로 ACR 할당 함수 호출
-        yield return StartCoroutine(CreateTaskDocument(newTaskData, (newTaskRef) => {
+        yield return StartCoroutine(CreateTaskDocument(newTaskData, (newTaskRef) =>
+        {
             if (newTaskRef != null)
             {
                 acrAssigner.AssignTaskToIdleAcr(newTaskRef);

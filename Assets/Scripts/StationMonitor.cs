@@ -29,7 +29,8 @@ public class StationMonitor : MonoBehaviour
             return;
         }
 
-        FirebaseManager.OnFirebaseInitialized += () => {
+        FirebaseManager.OnFirebaseInitialized += () =>
+        {
             db = FirebaseManager.Instance.DB;
             StartCoroutine(CheckStationsPeriodically());
         };

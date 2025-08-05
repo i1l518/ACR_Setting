@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="ACR_PhysicalController" Collapsed="true">
+    <Position X="11.75" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QAAEAoAKAAAABAAQAAAAAAFAAAAAAAAAgAIAAABABEA=</HashCode>
+      <FileName>Assets\Scripts\ACR_PhysicalController.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="ACRController" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="ACRController" Collapsed="true">
+    <Position X="9.5" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACFAAEEAGEQAQhAAAQAAAAAAIAACMAIEgJBkAICAUQ=</HashCode>
+      <FileName>Assets\Scripts\ACRController.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="ACRAssigner" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="AmrGripper" Collapsed="true">
+    <Position X="9.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAIAAFKAAAAAAAAAAAAAAAAAAAAAAAAAAABgIAAA=</HashCode>
+      <FileName>Assets\Scripts\Amr Gripper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BoxData" Collapsed="true">
+    <Position X="11" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\BoxData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BoxGenerator" Collapsed="true">
+    <Position X="4" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAAAABAACAABAAEAAAAAAAAgAAAAAAAAEAAAQA=</HashCode>
+      <FileName>Assets\Scripts\BoxGenerator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CargoItem" Collapsed="true">
+    <Position X="7.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAACAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\CargoData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CargoSlot" Collapsed="true">
+    <Position X="9.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAEA=</HashCode>
+      <FileName>Assets\Scripts\CargoData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CargoData" Collapsed="true">
+    <Position X="5.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAABAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\CargoData.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CentralControlSystem" Collapsed="true">
+    <Position X="11" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAQAAAgCAQAAAAAAAKAAAAAAAAAABAAAIgAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\CentralControlSystem.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="FirebaseManager" Collapsed="true">
+    <Position X="5.75" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAACAAAAAAAAAAAAAAAAAAAAAAQAAEAAAAgFA=</HashCode>
+      <FileName>Assets\Scripts\FirebaseManager.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="TaskManager" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="GripperController" Collapsed="true">
+    <Position X="11.75" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEgIBAAAAAAAAAgCAAAChQCEUAAEBAAAAgBAACgAAAA=</HashCode>
+      <FileName>Assets\Scripts\GripperController.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="ACR_PhysicalController" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="MeasureObjectSize3DCollider" Collapsed="true">
+    <Position X="11" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\Size.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StationManager" Collapsed="true">
+    <Position X="8.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CECAAAAQAAIAAAAAAAIAAAAgAAAAIAAAQAAAAAAAAFA=</HashCode>
+      <FileName>Assets\Scripts\StationManager.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="ACRAssigner" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="StationMonitor" Collapsed="true">
+    <Position X="1.75" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAwAAACCAQAAAAAAAIAAAAAAAAAAAAAAIAAAAAAAA=</HashCode>
+      <FileName>Assets\Scripts\StationMonitor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TaskManager" Collapsed="true">
+    <Position X="3.75" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAYAAAAACIQAAAAAgAAEABAAAAgAQCAAAA=</HashCode>
+      <FileName>Assets\Scripts\TaskManager.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="StationMonitor" />
+      <Property Name="OutboundRequestUI" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="OutboundRequestUI" Collapsed="true">
+    <Position X="1.5" Y="8" Width="2" />
+    <TypeIdentifier>
+      <HashCode>ACAgAABIOCAAAAAAEAAAAACAgAAAQAAAAgAAAAAIAAA=</HashCode>
+      <FileName>Assets\Scripts\UIManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ACRAssigner" Collapsed="true">
+    <Position X="7.75" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAAAAACAQAAAAAAACAAAAAAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>Assets\Scripts\ACRAssigner.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="FirebaseManager" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="GrabController" Collapsed="true">
+    <Position X="9.75" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAAAIACAAAAAAAAQAAAAIAAQAJAABAAAAA=</HashCode>
+      <FileName>Assets\Scripts\GrabController.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="GripperController" />
+    </ShowAsAssociation>
+  </Class>
+  <Font Name="맑은 고딕" Size="9" />
+</ClassDiagram>

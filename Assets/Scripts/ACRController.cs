@@ -47,6 +47,14 @@ public class ACRController : MonoBehaviour
     [Tooltip("NavMeshObstacle의 Carving Time과 동일한 값으로 설정하세요. NavMesh 복구를 기다리는 시간입니다.")]
     public float navMeshCarveTime = 0.1f;
 
+    public ACRAssigner ACRAssigner
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
     //================================================================
     // 1. Unity 생명주기 함수들: 스크립트의 초기화 및 해제 담당
     //================================================================
@@ -60,7 +68,7 @@ public class ACRController : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         obstacle = GetComponent<NavMeshObstacle>();
         physicalController = GetComponentInChildren<ACR_PhysicalController>(); // 자식에서 찾아옴
-        
+
         // Inspector 연결을 확인하고, 액션 등록부를 초기화합니다.
         if (physicalController == null)
         {
@@ -69,9 +77,6 @@ public class ACRController : MonoBehaviour
         InitializeActionRegistry();
 
         FirebaseManager.OnFirebaseInitialized += HandleFirebaseInitialized;
-
-        //// <<<--- '작업 완료' 이벤트를 구독합니다. ---
-        //ACREvents.OnActionCompleted += HandleActionCompleted;
     }
 
     /// <summary>
@@ -85,7 +90,7 @@ public class ACRController : MonoBehaviour
         if (physicalController != null)
         {
             actionRegistry["pickup"] = physicalController.PickupSequence;
-            actionRegistry["dropoff"] = physicalController.DropoffSequence; // dropoff도 미리 등록
+            actionRegistry["dropoff_multi"] = physicalController.DropoffSequence; //
             // 나중에 다른 액션이 추가되면 여기에 계속 등록하면 됩니다.
             // actionRegistry["charge"] = physicalController.ChargeSequence;
         }
@@ -121,9 +126,6 @@ public class ACRController : MonoBehaviour
     {
         FirebaseManager.OnFirebaseInitialized -= HandleFirebaseInitialized;
         listener?.Stop();
-
-        //// <<<--- 이벤트 구독을 반드시 해제합니다. ---
-        //ACREvents.OnActionCompleted -= HandleActionCompleted;
     }
     //================================================================
     // 2. Firebase 리스너 설정: ACR의 '귀' 역할
@@ -196,10 +198,10 @@ public class ACRController : MonoBehaviour
                 Debug.Log($"--- 경유지 {i + 1}/{stopsList.Count} 시작: 액션 = {action} ---");
 
                 // --- 1. 목적지로 이동 및 회전 ---
-                yield return StartCoroutine(MoveAndRotateForAction(stop, action));
+                yield return MoveAndRotateForAction(stop, action);
 
                 // --- 2. '도착 신호' 보내고 '완료 신호' 대기 ---
-                yield return StartCoroutine(SwitchToObstacleCoroutine()); // 물리 작업 중에는 장애물 역할
+                yield return SwitchToObstacleCoroutine(); // 물리 작업 중에는 장애물 역할
 
                 // ★★★ 핵심 3: Dictionary에서 메소드를 찾아 직접 실행 ★★★
                 // 더 이상 이벤트나 상태 변수, WaitUntil을 사용하지 않습니다.
@@ -207,16 +209,13 @@ public class ACRController : MonoBehaviour
                 {
                     Debug.Log($"[{acrId}] 물리 작업({action})을 시작합니다...");
                     // 찾아온 메소드(Delegate)를 코루틴으로 실행하고 끝날 때까지 기다립니다.
-                    yield return StartCoroutine(actionToExecute(stop));
+                    yield return actionToExecute(stop);
                     Debug.Log($"[{acrId}] 물리 작업({action})이 완료되었습니다.");
                 }
                 else
                 {
                     Debug.Log($"[{acrId}] 등록되지 않았거나 물리 작업이 없는 액션({action})입니다.");
                 }
-
-                //isPhysicalActionInProgress = true; // 대기 시작
-                //ACREvents.RaiseArrivedForAction(this.acrId, action, stop); // "도착했으니 작업 시작해!" 신호 전송
 
                 Debug.Log($"[{acrId}] 물리 작업 제어권을 넘기고 완료 신호를 대기합니다...");
                 yield return new WaitUntil(() => !isPhysicalActionInProgress); // 대기 종료
@@ -239,6 +238,7 @@ public class ACRController : MonoBehaviour
     // 4. 세부 작업 흐름(액션) 코루틴: 각 경유지에서 수행할 구체적인 행동들
     //================================================================
 
+    /*
     /// <summary>
     /// PhysicalController로부터 작업 완료 신호를 받으면 호출됩니다.
     /// </summary>
@@ -250,6 +250,7 @@ public class ACRController : MonoBehaviour
             isPhysicalActionInProgress = false; // 대기 상태를 해제합니다.
         }
     }
+    */
 
     /// <summary>
     /// 각 경유지의 목적지로 이동하고 회전하는 역할을 담당하는 통합 코루틴입니다.
@@ -264,10 +265,22 @@ public class ACRController : MonoBehaviour
         {
             case "pickup":
             case "dropoff":
-                var locationMap = stopData[action == "pickup" ? "source" : "destination"] as Dictionary<string, object>;
-                var posMap = locationMap["position"] as Dictionary<string, object>;
-                targetPosition = new Vector3(Convert.ToSingle(posMap["x"]), 0, Convert.ToSingle(posMap["z"]));
-                targetRotation = GetRotationFromMap(locationMap, "rotation");
+                string locationKey = (action == "pickup") ? "source" : "destination";
+
+                if (stopData.TryGetValue(locationKey, out object locObj) && locObj is Dictionary<string, object> locationMap)
+                {
+                    if (locationMap.TryGetValue("position", out object posObj) && posObj is Dictionary<string, object> posMap)
+                    {
+                        targetPosition = new Vector3(Convert.ToSingle(posMap["x"]), 0, Convert.ToSingle(posMap["z"]));
+                    }
+                    targetRotation = GetRotationFromMap(locationMap, "rotation");
+                }
+                else
+                {
+                    Debug.LogError($"[{acrId}] Action '{action}'에 필요한 '{locationKey}' 맵을 찾을 수 없습니다!");
+                    // 여기서 처리를 중단해야 할 수도 있습니다.
+                    yield break;
+                }
                 break;
 
             case "pickup_multi":
@@ -275,7 +288,18 @@ public class ACRController : MonoBehaviour
                 string stationIdKey = action == "pickup_multi" ? "sourceStationId" : "destinationStationId";
                 string rotationKey = action == "pickup_multi" ? "sourceStationRotation" : "destinationStationRotation";
                 string stationId = GetValueFromMap(stopData, stationIdKey);
-                targetPosition = StationManager.Instance.GetStationTransform(stationId).position;
+
+                // StationManager에서 null을 반환할 수 있으므로 방어 코드 추가
+                Transform stationTransform = StationManager.Instance.GetStationTransform(stationId);
+                if (stationTransform != null)
+                {
+                    targetPosition = stationTransform.position;
+                }
+                else
+                {
+                    Debug.LogError($"[{acrId}] StationManager에서 ID '{stationId}'를 찾을 수 없습니다!");
+                    yield break;
+                }
                 targetRotation = GetRotationFromTask(stopData, rotationKey);
                 break;
         }

@@ -33794,7 +33794,6 @@ GameObject:
   - component: {fileID: 2857534505262029887}
   - component: {fileID: 4416125772006640300}
   - component: {fileID: 1489301000580831376}
-  - component: {fileID: 8875263733619806900}
   m_Layer: 0
   m_Name: ACR_Pivot
   m_TagString: Untagged
@@ -33888,7 +33887,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   acrId: acr_01
-  gripperController: {fileID: 8875263733619806900}
+  gripperController: {fileID: 0}
   grabController: {fileID: 767989239301329840}
   storageSlotTransforms:
   - {fileID: 7443295245591019715}
@@ -33900,29 +33899,6 @@ MonoBehaviour:
   boxLayer:
     serializedVersion: 2
     m_Bits: 64
---- !u!114 &8875263733619806900
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5130432749351628028}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d60e3ef263ded54c8ec04784f6a47c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  liftMechanism: {fileID: 6408370607953455046}
-  turntableMechanism: {fileID: 6529010033611799247}
-  gripperSlider: {fileID: 8926217141101601773}
-  gripperLeft: {fileID: 7143282400603269516}
-  gripperRight: {fileID: 3169837198121224029}
-  boxparents: {fileID: 5550461877405453710}
-  liftSpeed: 0.5
-  rotationSpeed: 90
-  gripperSlideSpeed: 0.5
-  gripperExtendSpeed: 0.5
-  invertSlideDirection: 1
 --- !u!1 &5144958075262862728
 GameObject:
   m_ObjectHideFlags: 0

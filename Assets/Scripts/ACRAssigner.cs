@@ -11,9 +11,18 @@ public class ACRAssigner : MonoBehaviour
 {
     private FirebaseFirestore db;
 
+    public FirebaseManager FirebaseManager
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
     void Start()
     {
-        FirebaseManager.OnFirebaseInitialized += () => {
+        FirebaseManager.OnFirebaseInitialized += () =>
+        {
             db = FirebaseManager.Instance.DB;
         };
     }

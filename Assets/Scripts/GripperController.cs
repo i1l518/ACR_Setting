@@ -23,6 +23,14 @@ public class GripperController : MonoBehaviour
 
     private const float GRIPPER_EXTEND_DISTANCE = 0.5f;
 
+    public ACR_PhysicalController ACR_PhysicalController
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
     // --- LIFT 제어 ---
     public IEnumerator MoveLiftSequence(float targetLocalY)
     { /* 이전과 동일 */
@@ -56,6 +64,28 @@ public class GripperController : MonoBehaviour
 
         yield return StartCoroutine(MoveLocalCoroutine(gripperSlider, targetPos, gripperSlideSpeed));
         Debug.Log("슬라이더 이동 완료.");
+    }
+
+    /// <summary>
+    /// 특정 월드 좌표를 향해 턴테이블을 회전시킵니다.
+    /// </summary>
+    public IEnumerator RotateTowards(Vector3 worldPosition)
+    {
+        // 로봇의 위치에서 목표 지점을 바라보는 방향 벡터를 계산합니다. (Y축은 무시)
+        Vector3 directionToTarget = worldPosition - transform.position;
+        directionToTarget.y = 0;
+
+        // 턴테이블의 '앞쪽' 방향(local z-axis)이 이 방향 벡터와 일치하도록 하는 회전값을 계산합니다.
+        Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
+
+        // 이미 구현된 RotateTurntableSequence를 재사용하거나,
+        // 아래처럼 직접 Lerp를 구현할 수 있습니다.
+        // 여기서는 기존 함수를 재사용하기 위해 목표 각도(Y-euler)만 추출합니다.
+        float targetYAngle = targetRotation.eulerAngles.y;
+
+        // 턴테이블 메커니즘의 현재 로컬 회전값을 기준으로 목표 각도를 계산해야 할 수도 있습니다.
+        // 아래는 간단한 버전입니다.
+        yield return StartCoroutine(RotateTurntableSequence(targetYAngle));
     }
 
     // --- Gripper 집게 확장/축소 제어 ---

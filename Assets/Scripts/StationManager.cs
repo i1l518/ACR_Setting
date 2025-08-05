@@ -1,6 +1,7 @@
 // StationManager.cs
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
+using static ACR_PhysicalController;
 
 // 스테이션 정보를 담는 클래스를 확장하여, 여러 개의 슬롯 Transform 리스트를 포함하도록 합니다.
 [System.Serializable]
@@ -20,8 +21,23 @@ public class StationManager : MonoBehaviour
 {
     public static StationManager Instance { get; private set; }
 
+    public ACRAssigner ACRAssigner
+    {
+        get => default;
+        set
+        {
+        }
+    }
+
     // Inspector에서 모든 스테이션을 등록합니다.
     public List<Station> stations = new List<Station>();
+
+    [Header("Slot Check Settings")]
+    [Tooltip("슬롯에 놓인 박스를 감지할 때 사용할 레이어입니다.")]
+    public LayerMask boxCheckLayer;
+
+    [Tooltip("슬롯의 점유 여부를 확인할 감지 영역의 크기입니다.")]
+    public Vector3 boxCheckSize = new Vector3(0.75f, 0.55f, 0.85f);
 
     // 빠른 조회를 위해 Station 객체 전체를 저장하는 딕셔너리로 변경합니다.
     private Dictionary<string, Station> stationDictionary = new Dictionary<string, Station>();
@@ -97,5 +113,78 @@ public class StationManager : MonoBehaviour
 
         Debug.LogError($"[StationManager] ID가 '{stationId}'인 스테이션을 찾을 수 없습니다!");
         return null;
+    }
+
+    /// <summary>
+    /// 특정 스테이션에서 비어있는 첫 번째 슬롯의 Transform을 찾아 반환합니다.
+    /// 물리 체크(OverlapBox)를 사용하여 슬롯에 다른 콜라이더(박스)가 있는지 확인합니다.
+    /// </summary>
+    /// <param name="stationId">찾을 스테이션의 ID</param>
+    /// <returns>비어있는 첫 번째 슬롯의 Transform. 빈 슬롯이 없으면 null.</returns>
+    public Transform FindEmptySlotTransform(string stationId) // <<< 파라미터가 stationId만 남습니다.
+    {
+        if (stationDictionary.TryGetValue(stationId, out Station station))
+        {
+            foreach (var slotTransform in station.slots)
+            {
+                // 이제 StationManager가 직접 가진 변수들을 사용합니다.
+                Collider[] colliders = Physics.OverlapBox(slotTransform.position, boxCheckSize / 2, slotTransform.rotation, boxCheckLayer);
+
+                if (colliders.Length == 0)
+                {
+                    Debug.Log($"[StationManager] 스테이션 '{stationId}'에서 비어있는 슬롯 '{slotTransform.name}'을(를) 찾았습니다.");
+                    return slotTransform;
+                }
+            }
+
+            Debug.LogError($"[StationManager] 스테이션 '{stationId}'에 비어있는 슬롯이 없습니다!");
+            return null;
+        }
+
+        Debug.LogError($"[StationManager] ID가 '{stationId}'인 스테이션을 찾을 수 없습니다!");
+        return null;
+    }
+
+    /// <summary>
+    /// Scene 뷰에서 선택했을 때, 각 스테이션 슬롯의 물리 체크 영역을 시각적으로 표시합니다.
+    /// </summary>
+    private void OnDrawGizmosSelected()
+    {
+        // stations 리스트가 비어있으면 아무것도 하지 않습니다.
+        if (stations == null || stations.Count == 0)
+        {
+            return;
+        }
+
+        // 모든 스테이션을 순회합니다.
+        foreach (var station in stations)
+        {
+            // 스테이션에 슬롯이 없으면 건너뜁니다.
+            if (station.slots == null || station.slots.Count == 0)
+            {
+                continue;
+            }
+
+            // 해당 스테이션의 모든 슬롯을 순회합니다.
+            foreach (var slotTransform in station.slots)
+            {
+                // 슬롯 Transform이 할당되지 않은 경우를 대비합니다.
+                if (slotTransform == null)
+                {
+                    continue;
+                }
+
+                // 기즈모의 색상을 설정합니다. (반투명한 노란색)
+                Gizmos.color = new Color(1, 0.92f, 0.016f, 0.5f);
+
+                // 기즈모의 행렬을 슬롯의 위치와 회전에 맞게 설정합니다.
+                // 이렇게 하면 boxCheckSize가 로컬 좌표계 기준이 아닌, 슬롯의 회전을 따라갑니다.
+                Gizmos.matrix = Matrix4x4.TRS(slotTransform.position, slotTransform.rotation, Vector3.one);
+
+                // 설정된 행렬을 기준으로 와이어 큐브를 그립니다.
+                // OverlapBox의 중심점은 position이므로, 기즈모는 (0,0,0)에 그립니다.
+                Gizmos.DrawCube(Vector3.zero, boxCheckSize);
+            }
+        }
     }
 }

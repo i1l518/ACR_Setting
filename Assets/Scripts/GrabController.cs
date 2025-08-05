@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 
 public class GrabController : MonoBehaviour
@@ -15,6 +16,14 @@ public class GrabController : MonoBehaviour
     // 외부에 '읽기 전용'으로 _heldObject를 노출하는 프로퍼티입니다.
     // "HeldObject의 값을 물어보면 _heldObject 값을 알려줄게" 라는 의미의 축약형 문법입니다.
     public GameObject HeldObject => _heldObject;
+
+    public GripperController GripperController
+    {
+        get => default;
+        set
+        {
+        }
+    }
 
     private void OnTriggerEnter(Collider other)
     { /* 이전과 동일 */

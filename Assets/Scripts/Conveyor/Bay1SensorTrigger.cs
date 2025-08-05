@@ -32,4 +32,19 @@ public class Bay1SensorTrigger : MonoBehaviour
         Debug.Log("✅ Bay1 컨베이어 재작동");
         isTriggered = false;
     }
+
+    // ✅ SensorTrigger에서 직접 호출하는 즉시 정지용 메서드
+    public void StopImmediately()
+    {
+        StopAllCoroutines();  // 현재 진행 중인 StopAndResume 중단
+        isTriggered = true;
+
+        if (bay1Conveyor != null)
+            bay1Conveyor.isRunning = false;
+
+        Debug.Log("⛔ SensorTrigger에 의해 Bay1 컨베이어 정지됨");
+
+        // 필요 시 자동 재작동 다시 시작하려면 다음 줄 추가
+        StartCoroutine(StopAndResume());
+    }
 }

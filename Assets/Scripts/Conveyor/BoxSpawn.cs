@@ -1,11 +1,10 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections;
 
 public class BoxSpawn : MonoBehaviour
 {
     public GameObject boxPrefab;
-    public float minInterval = 1f;  // ÃÖ¼Ò »ı¼º °£°İ
-    public float maxInterval = 4f;  // ÃÖ´ë »ı¼º °£°İ
+    public float spawnInterval = 2f;  // ë°•ìŠ¤ ìƒì„± ê°„ê²© (ì´ˆ)
     public int totalBoxes = 10;
 
     private bool stopRequested = false;
@@ -26,14 +25,12 @@ public class BoxSpawn : MonoBehaviour
         {
             if (stopRequested)
             {
-                Debug.Log("¹Ú½º »ı¼º Áß´ÜµÊ by ¼¾¼­");
+                Debug.Log("ğŸ“¦ ë°•ìŠ¤ ìƒì„± ì¤‘ë‹¨ë¨ by ì„¼ì„œ");
                 yield break;
             }
 
             Instantiate(boxPrefab, transform.position, Quaternion.identity);
-
-            float randomDelay = Random.Range(minInterval, maxInterval);
-            yield return new WaitForSeconds(randomDelay);
+            yield return new WaitForSeconds(spawnInterval);
         }
     }
 }

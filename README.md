@@ -1,69 +1,74 @@
-# ACR-Firebase í”„ë¡œì íŠ¸
+# ACR-Firebase ÇÁ·ÎÁ§Æ®
 
-ì´ í”„ë¡œì íŠ¸ëŠ” ìžìœ¨ ì´ë™ ë¡œë´‡(AMR) ì‹œë®¬ë ˆì´ì…˜ í™˜ê²½ì— Firebase Firestore ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ì—°ë™í•˜ëŠ” ë°©ë²•ì„ ë‹¤ë£¹ë‹ˆë‹¤.
+ÀÌ ÇÁ·ÎÁ§Æ®´Â ÀÚÀ² ÀÌµ¿ ·Îº¿(AMR) ½Ã¹Ä·¹ÀÌ¼Ç È¯°æ¿¡ Firebase Firestore µ¥ÀÌÅÍº£ÀÌ½º¸¦ ¿¬µ¿ÇÏ´Â ¹æ¹ýÀ» ´Ù·ì´Ï´Ù.
 
-##  ëª©ì°¨
+##  ¸ñÂ÷
 
-- [í”„ë¡œì íŠ¸ ì„¤ì •](#-í”„ë¡œì íŠ¸-ì„¤ì •)
-- [Firebase ì—°ë™](#-firebase-ì—°ë™)
-
----
-
-## í”„ë¡œì íŠ¸ ì„¤ì •
-
-ê¸°ë³¸ í™˜ê²½ì„ ì„¤ì •í•˜ê³  ìž¥ì• ë¬¼(Obstacle)ì„ ë°°ì¹˜í•˜ëŠ” ê³¼ì •ìž…ë‹ˆë‹¤.
-
-1.  **í”„ë¡œì íŠ¸ íŒŒì¼ ë‹¤ìš´ë¡œë“œ ë° ì ìš©**
-    -   ì œê³µëœ `.zip` íŒŒì¼ì„ ë‹¤ìš´ë¡œë“œí•©ë‹ˆë‹¤.
-    -   ì••ì¶•ì„ í•´ì œí•œ í›„, ê¸°ì¡´ Unity í”„ë¡œì íŠ¸ í´ë”ì— **ë®ì–´ì”Œì›ë‹ˆë‹¤.**
-
-2.  **ê³µìœ  ì˜¤ë¸Œì íŠ¸(Share Object) ë°°ì¹˜**
-    -   Unity ì—ë””í„°ì˜ `Project` ì°½ì—ì„œ `Assets/Share` í´ë”ë¡œ ì´ë™í•©ë‹ˆë‹¤.
-    -   `Our Project`, `ACR_Pivot` ì—ì…‹ì„ `Hierarchy` ì°½ìœ¼ë¡œ ë“œëž˜ê·¸ ì•¤ ë“œë¡­í•˜ì—¬ ì”¬ì— ë°°ì¹˜í•©ë‹ˆë‹¤.
-
-    ![Share í´ë”ì˜ ì˜¤ë¸Œì íŠ¸](./Image/share-object.png)
-
-3.  **í”„ë¦¬íŒ¹(Prefab) ì—°ê²° í•´ì œ**
-    -   `Hierarchy` ì°½ì—ì„œ `Our Project`ì™€ `ACR_Pivot` ì˜¤ë¸Œì íŠ¸ë¥¼ ê°ê° ì„ íƒí•©ë‹ˆë‹¤.
-    -   ë§ˆìš°ìŠ¤ ìš°í´ë¦­ í›„ `Prefab > Unpack Completely`ë¥¼ ì„ íƒí•˜ì—¬ í”„ë¦¬íŒ¹ê³¼ì˜ ì—°ê²°ì„ ì™„ì „ížˆ í•´ì œí•©ë‹ˆë‹¤. ì´ëŠ” ì˜¤ë¸Œì íŠ¸ë¥¼ ìžìœ ë¡­ê²Œ ìˆ˜ì •í•˜ê¸° ìœ„í•¨ìž…ë‹ˆë‹¤.
-
-    ![í”„ë¦¬íŒ¹ Unpack Completely](./Image/unpack.png)
-
-4.  **ìž¥ì• ë¬¼ Static ì„¤ì •**
-    -   ì”¬ì— ë°°ì¹˜ëœ ìž¥ì• ë¬¼(ì„ ë°˜, ë²½ ë“±) ì—­í• ì„ í•˜ëŠ” ëª¨ë“  ê²Œìž„ ì˜¤ë¸Œì íŠ¸ë¥¼ ì„ íƒí•©ë‹ˆë‹¤.
-    -   `Inspector` ì°½ ìš°ì¸¡ ìƒë‹¨ì˜ **Static** ë“œë¡­ë‹¤ìš´ ë©”ë‰´ë¥¼ í´ë¦­í•˜ê³ , **Everything**ì„ ì„ íƒí•©ë‹ˆë‹¤. ì´ëŠ” Unityì˜ ë„¤ë¹„ê²Œì´ì…˜ ë° ë¼ì´íŠ¸ë§¤í•‘ ì‹œìŠ¤í…œì´ í•´ë‹¹ ì˜¤ë¸Œì íŠ¸ë“¤ì„ ê³ ì •ëœ í™˜ê²½ ìš”ì†Œë¡œ ì¸ì‹í•˜ë„ë¡ ì„¤ì •í•˜ëŠ” ì¤‘ìš”í•œ ê³¼ì •ìž…ë‹ˆë‹¤.
-
-    ![Static ì„¤ì •](./Image/static.png)
-
-5. **ë¬¼ì²´ê°€ ì›€ì§ì¼ ë°”ë‹¥ ì„¤ì •**
-    -   Unityì—ì„œ ë¬¼ì²´ê°€ ì›€ì§ì¼ ë°”ë‹¥ì„ í´ë¦­í•œë‹¤
-    -   Inspector ì°½ì— Navmeshë¥¼ ì¶”ê°€í•˜ê³  agent typeì„ ì„¤ì •í•˜ê³  bakeì„ ëˆ„ë¥¸ë‹¤.
-
-    ![Bake í•˜ëŠ” ë²•](./Image/Bake.png) 
+- [ÇÁ·ÎÁ§Æ® ¼³Á¤](#-ÇÁ·ÎÁ§Æ®-¼³Á¤)
+- [Firebase ¿¬µ¿](#-firebase-¿¬µ¿)
 
 ---
 
-## Firebase ì—°ë™
+## ÇÁ·ÎÁ§Æ® ¼³Á¤
 
-Unity í”„ë¡œì íŠ¸ì— Firebase Firestore ë°ì´í„°ë² ì´ìŠ¤ë¥¼ ì—°ë™í•˜ëŠ” ê³¼ì •ìž…ë‹ˆë‹¤.
+±âº» È¯°æÀ» ¼³Á¤ÇÏ°í Àå¾Ö¹°(Obstacle)À» ¹èÄ¡ÇÏ´Â °úÁ¤ÀÔ´Ï´Ù.
 
-1.  **Firebase Unity SDK ë‹¤ìš´ë¡œë“œ**
-    -   [Firebase ê³µì‹ ë¬¸ì„œ](https://firebase.google.com/docs/unity/setup)ì— ì ‘ì†í•©ë‹ˆë‹¤.
-    -   **`.NET Framework 4.x`** ë²„ì „ì˜ SDK (`.zip` íŒŒì¼)ë¥¼ ë‹¤ìš´ë¡œë“œí•©ë‹ˆë‹¤.
+1.  **ÇÁ·ÎÁ§Æ® ÆÄÀÏ ´Ù¿î·Îµå ¹× Àû¿ë**
+    -   Á¦°øµÈ `.zip` ÆÄÀÏÀ» ´Ù¿î·ÎµåÇÕ´Ï´Ù.
+    -   ¾ÐÃàÀ» ÇØÁ¦ÇÑ ÈÄ, ±âÁ¸ Unity ÇÁ·ÎÁ§Æ® Æú´õ¿¡ **µ¤¾î¾º¿ó´Ï´Ù.**
 
-    ![Unity SDK íŒŒì¼ ë‹¤ìš´](./Image/Unity-SDK.png)
+2.  **°øÀ¯ ¿ÀºêÁ§Æ®(Share Object) ¹èÄ¡**
+    -   Unity ¿¡µðÅÍÀÇ `Project` Ã¢¿¡¼­ `Assets/Share` Æú´õ·Î ÀÌµ¿ÇÕ´Ï´Ù.
+    -   `Our Project`, `ACR_Pivot` ¿¡¼ÂÀ» `Hierarchy` Ã¢À¸·Î µå·¡±× ¾Ø µå·ÓÇÏ¿© ¾À¿¡ ¹èÄ¡ÇÕ´Ï´Ù.
 
-2.  **í•„ìˆ˜ íŒ¨í‚¤ì§€ ìž„í¬íŠ¸**
-    -   ë‹¤ìš´ë¡œë“œí•œ SDKì˜ ì••ì¶•ì„ í•´ì œí•˜ë©´ `dotnet4` í´ë”ê°€ ìžˆìŠµë‹ˆë‹¤.
-    -   ì•„ëž˜ **ë‘ ê°œì˜ `.unitypackage` íŒŒì¼**ì„ Unity í”„ë¡œì íŠ¸ì˜ `Assets` ì°½ìœ¼ë¡œ ìˆœì„œëŒ€ë¡œ ë“œëž˜ê·¸ ì•¤ ë“œë¡­í•˜ì—¬ ìž„í¬íŠ¸í•©ë‹ˆë‹¤.
+    ![Share Æú´õÀÇ ¿ÀºêÁ§Æ®](./Image/share-object.png)
 
-    > ** ?? ì „ë¬¸ê°€ íŒ:** ì¢…ì†ì„± ë¬¸ì œë¥¼ ë°©ì§€í•˜ê¸° ìœ„í•´ ë°˜ë“œì‹œ ì•„ëž˜ ìˆœì„œë¥¼ ì§€ì¼œì£¼ì„¸ìš”.
+3.  **ÇÁ¸®ÆÕ(Prefab) ¿¬°á ÇØÁ¦**
+    -   `Hierarchy` Ã¢¿¡¼­ `Our Project`¿Í `ACR_Pivot` ¿ÀºêÁ§Æ®¸¦ °¢°¢ ¼±ÅÃÇÕ´Ï´Ù.
+    -   ¸¶¿ì½º ¿ìÅ¬¸¯ ÈÄ `Prefab > Unpack Completely`¸¦ ¼±ÅÃÇÏ¿© ÇÁ¸®ÆÕ°úÀÇ ¿¬°áÀ» ¿ÏÀüÈ÷ ÇØÁ¦ÇÕ´Ï´Ù. ÀÌ´Â ¿ÀºêÁ§Æ®¸¦ ÀÚÀ¯·Ó°Ô ¼öÁ¤ÇÏ±â À§ÇÔÀÔ´Ï´Ù.
+
+    ![ÇÁ¸®ÆÕ Unpack Completely](./Image/unpack.png)
+
+4.  **Àå¾Ö¹° Static ¼³Á¤**
+    -   ¾À¿¡ ¹èÄ¡µÈ Àå¾Ö¹°(¼±¹Ý, º® µî) ¿ªÇÒÀ» ÇÏ´Â ¸ðµç °ÔÀÓ ¿ÀºêÁ§Æ®¸¦ ¼±ÅÃÇÕ´Ï´Ù.
+    -   `Inspector` Ã¢ ¿ìÃø »ó´ÜÀÇ **Static** µå·Ó´Ù¿î ¸Þ´º¸¦ Å¬¸¯ÇÏ°í, **Everything**À» ¼±ÅÃÇÕ´Ï´Ù. ÀÌ´Â UnityÀÇ ³×ºñ°ÔÀÌ¼Ç ¹× ¶óÀÌÆ®¸ÅÇÎ ½Ã½ºÅÛÀÌ ÇØ´ç ¿ÀºêÁ§Æ®µéÀ» °íÁ¤µÈ È¯°æ ¿ä¼Ò·Î ÀÎ½ÄÇÏµµ·Ï ¼³Á¤ÇÏ´Â Áß¿äÇÑ °úÁ¤ÀÔ´Ï´Ù.
+
+    ![Static ¼³Á¤](./Image/static.png)
+
+5. **¹°Ã¼°¡ ¿òÁ÷ÀÏ ¹Ù´Ú ¼³Á¤**
+    -   Unity¿¡¼­ ¹°Ã¼°¡ ¿òÁ÷ÀÏ ¹Ù´ÚÀ» Å¬¸¯ÇÑ´Ù
+    -   Inspector Ã¢¿¡ Navmesh¸¦ Ãß°¡ÇÏ°í agent typeÀ» ¼³Á¤ÇÏ°í bakeÀ» ´©¸¥´Ù.
+
+    ![Bake ÇÏ´Â ¹ý](./Image/Bake.png) 
+
+---
+
+## Firebase ¿¬µ¿
+
+Unity ÇÁ·ÎÁ§Æ®¿¡ Firebase Firestore µ¥ÀÌÅÍº£ÀÌ½º¸¦ ¿¬µ¿ÇÏ´Â °úÁ¤ÀÔ´Ï´Ù.
+
+1. **google-services.json ÇÁ·ÎÁ§Æ®¿¡ ³Ö±â**
+    -   firebaseÀÇ ÇÁ·ÎÁ§Æ® ¼¼ÆÃ¿¡¼­ google-services.jsonÀ» ´Ù¿î¹Þ¾Æ UnityÀÇ AssetsÆú´õ¿¡ ³Ö¾îÁØ´Ù.
+
+    ![google-services.json ÆÄÀÏ ´Ù¿î ¹Þ´Â ¹ý](./Image/google-service.png)
+
+2.  **Firebase Unity SDK ´Ù¿î·Îµå**
+    -   [Firebase °ø½Ä ¹®¼­](https://firebase.google.com/docs/unity/setup)¿¡ Á¢¼ÓÇÕ´Ï´Ù.
+    -   **`.NET Framework 4.x`** ¹öÀüÀÇ SDK (`.zip` ÆÄÀÏ)¸¦ ´Ù¿î·ÎµåÇÕ´Ï´Ù.
+
+    ![Unity SDK ÆÄÀÏ ´Ù¿î](./Image/Unity-SDK.png)
+
+3.  **ÇÊ¼ö ÆÐÅ°Áö ÀÓÆ÷Æ®**
+    -   ´Ù¿î·ÎµåÇÑ SDKÀÇ ¾ÐÃàÀ» ÇØÁ¦ÇÏ¸é `dotnet4` Æú´õ°¡ ÀÖ½À´Ï´Ù.
+    -   ¾Æ·¡ **µÎ °³ÀÇ `.unitypackage` ÆÄÀÏ**À» Unity ÇÁ·ÎÁ§Æ®ÀÇ `Assets` Ã¢À¸·Î ¼ø¼­´ë·Î µå·¡±× ¾Ø µå·ÓÇÏ¿© ÀÓÆ÷Æ®ÇÕ´Ï´Ù.
+
+    > ** ?? Àü¹®°¡ ÆÁ:** Á¾¼Ó¼º ¹®Á¦¸¦ ¹æÁöÇÏ±â À§ÇØ ¹Ýµå½Ã ¾Æ·¡ ¼ø¼­¸¦ ÁöÄÑÁÖ¼¼¿ä.
     >
-    > 1.  `FirebaseAuth.unitypackage` (ì¸ì¦ ë° í•µì‹¬ ë¼ì´ë¸ŒëŸ¬ë¦¬)
-    > 2.  `FirebaseFirestore.unitypackage` (Firestore ë°ì´í„°ë² ì´ìŠ¤)
+    > 1.  `FirebaseAuth.unitypackage` (ÀÎÁõ ¹× ÇÙ½É ¶óÀÌºê·¯¸®)
+    > 2.  `FirebaseFirestore.unitypackage` (Firestore µ¥ÀÌÅÍº£ÀÌ½º)
 
-3.  **ìž„í¬íŠ¸ í™•ì¸**
-    -   ê° íŒ¨í‚¤ì§€ë¥¼ ë“œëž˜ê·¸í•˜ë©´ "Import Unity Package" ì°½ì´ ë‚˜íƒ€ë‚©ë‹ˆë‹¤.
-    -   ëª¨ë“  í•­ëª©ì´ ì²´í¬ëœ ê¸°ë³¸ ìƒíƒœì—ì„œ `Import` ë²„íŠ¼ì„ í´ë¦­í•˜ì—¬ ìž„í¬íŠ¸ë¥¼ ì™„ë£Œí•©ë‹ˆë‹¤.
+4.  **ÀÓÆ÷Æ® È®ÀÎ**
+    -   °¢ ÆÐÅ°Áö¸¦ µå·¡±×ÇÏ¸é "Import Unity Package" Ã¢ÀÌ ³ªÅ¸³³´Ï´Ù.
+    -   ¸ðµç Ç×¸ñÀÌ Ã¼Å©µÈ ±âº» »óÅÂ¿¡¼­ `Import` ¹öÆ°À» Å¬¸¯ÇÏ¿© ÀÓÆ÷Æ®¸¦ ¿Ï·áÇÕ´Ï´Ù.
 
-ì´ì œ í”„ë¡œì íŠ¸ì— Firebase ì—°ë™ì„ ìœ„í•œ ëª¨ë“  ì¤€ë¹„ê°€ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.
+ÀÌÁ¦ ÇÁ·ÎÁ§Æ®¿¡ Firebase ¿¬µ¿À» À§ÇÑ ¸ðµç ÁØºñ°¡ ¿Ï·áµÇ¾ú½À´Ï´Ù.

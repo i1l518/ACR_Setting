@@ -76,6 +76,7 @@ crashlytics-build.properties
 
 #Firebase key
 Firebase/amr-database-c3699-firebase-adminsdk-fbsvc-ae043dca98.json
+/Assets/google-services.json
 
 # End of https://www.toptal.com/developers/gitignore/api/unity
 

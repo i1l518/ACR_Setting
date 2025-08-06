@@ -47,8 +47,13 @@ public class GrabController : MonoBehaviour
             //// 1. 파지하기 직전, 박스의 원래 월드 스케일을 기억합니다.
             //Vector3 originalScale = _heldObject.lossyScale;
 
+<<<<<<< HEAD
+            // 2. 박스의 부모를 변경합니다.
+            heldBox.SetParent(this.transform.parent);
+=======
             //// 2. 박스의 부모를 변경합니다.
             //_heldObject.SetParent(this.transform.parent);
+>>>>>>> 3aeb94fa4e3f8765644417a539cdd19ca9f1e24c
             
 
             // 3. 부모의 월드 스케일(lossyScale)을 가져옵니다.
@@ -66,6 +71,18 @@ public class GrabController : MonoBehaviour
             // 5. 위치와 회전을 기준점에 맞춥니다.
             if (grabAnchor != null)
             {
+<<<<<<< HEAD
+                heldBox.position = grabAnchor.position;
+                //heldBox.rotation = grabAnchor.rotation;
+            }
+            else
+            {
+                heldBox.localPosition = Vector3.zero;
+                //heldBox.localRotation = Quaternion.identity;
+            }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            heldBox.transform.localRotation = Quaternion.Euler(90, 0, 0);
+=======
                 _heldObject.transform.position = grabAnchor.position;
             }
             else
@@ -74,10 +91,26 @@ public class GrabController : MonoBehaviour
             }
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             _heldObject.transform.localRotation = Quaternion.Euler(90, 0, 0);
+>>>>>>> 3aeb94fa4e3f8765644417a539cdd19ca9f1e24c
             detectedBox = null;
         }
     }
 
+<<<<<<< HEAD
+  public void Release(Transform newParent)
+    {
+        if (heldBox != null)
+        {
+            Debug.Log($"[GrabController] {heldBox.name} 놓기 실행! 새로운 부모: {(newParent != null ? newParent.name : "World")}");
+            
+            // 박스의 부모를 전달받은 newParent로 설정합니다.
+            // worldPositionStays를 true로 하여, 현재 월드 위치를 그대로 유지하며 부모만 바꿉니다.
+            heldBox.SetParent(newParent, true);
+            
+
+            // 잡고 있던 박스 정보를 비웁니다.
+            heldBox = null;
+=======
     /// <summary>
     /// 잡고 있던 오브젝트를 놓고, 그 오브젝트의 참조를 반환합니다.
     /// </summary>
@@ -93,6 +126,7 @@ public class GrabController : MonoBehaviour
             _heldObject = null; // 내부 상태 업데이트
 
             return releasedObject; // 방금 놓은 오브젝트 반환
+>>>>>>> 3aeb94fa4e3f8765644417a539cdd19ca9f1e24c
         }
         return null;
     }

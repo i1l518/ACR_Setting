@@ -2,6 +2,38 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+<<<<<<< HEAD
+using System;
+using Firebase.Firestore;
+using System.Threading.Tasks;
+
+public class ACR_PhysicalController : MonoBehaviour
+{
+    [Header("ACR 고유 ID")]
+    public string acrId = "acr_01";
+    [Header("연결 컴포넌트")]
+    public GripperController gripperController;
+    public GrabController grabController;
+
+    private FirebaseFirestore db;
+
+    void Start()
+    {
+        FirebaseManager.OnFirebaseInitialized += () => { db = FirebaseManager.Instance.DB; };
+    }
+
+    void OnEnable() { ACREvents.OnArrivedForAction += HandleArrivedForAction; }
+    void OnDisable() { ACREvents.OnArrivedForAction -= HandleArrivedForAction; }
+
+    private void HandleArrivedForAction(string id, string action, Dictionary<string, object> stopData)
+    {
+        if (id != this.acrId) return;
+        Debug.Log($"[{acrId}] 물리 제어기: '{action}' 작업을 위한 도착 신호 수신!");
+
+        if (action == "pickup") StartCoroutine(PickupSequence(stopData));
+        else if (action == "dropoff") StartCoroutine(DropoffSequence(stopData));
+        else ACREvents.RaiseOnActionCompleted(this.acrId);
+=======
 using System.Linq;
 using UnityEngine;
 
@@ -41,6 +73,7 @@ public class ACR_PhysicalController : MonoBehaviour
             StoredBoxId = null;
             return boxToRelease;
         }
+>>>>>>> 3aeb94fa4e3f8765644417a539cdd19ca9f1e24c
     }
 
     [Header("ACR 고유 ID")]
@@ -130,18 +163,42 @@ public class ACR_PhysicalController : MonoBehaviour
     {
         Debug.Log($"--- [{this.acrId}] 물품 회수(Pickup) 시퀀스 시작 ---");
 
-        // 1단계: 리프트 상승
+        var sourceMap = stopData["source"] as Dictionary<string, object>;
+        string gantryId = GetValueFromMap(sourceMap, "gantryId");
         float targetLocalHeight = 0f;
         float pickupWorldHeight = 0f; // ★ 박스를 집은 월드 높이를 저장할 변수
         try
         {
+<<<<<<< HEAD
+            var posMap = sourceMap["position"] as Dictionary<string, object>;
+            targetLocalHeight = Convert.ToSingle(posMap["y"]) - transform.position.y;
+=======
             var locationMap = stopData["source"] as Dictionary<string, object>;
             var posMap = locationMap["position"] as Dictionary<string, object>;
             pickupWorldHeight = Convert.ToSingle(posMap["y"]);
             targetLocalHeight = pickupWorldHeight - transform.position.y;
+>>>>>>> 3aeb94fa4e3f8765644417a539cdd19ca9f1e24c
         }
-        catch (Exception e) { Debug.LogError($"목표 높이 파싱 실패: {e.Message}"); }
+        catch { }
+
+        // --- 물리적 작업 수행 ---
         yield return StartCoroutine(gripperController.MoveLiftSequence(targetLocalHeight));
+<<<<<<< HEAD
+        yield return StartCoroutine(gripperController.RotateTurntableSequence(90f));
+        yield return StartCoroutine(gripperController.SlideGripperSequence(1.0f));
+        grabController.Grab();
+        yield return new WaitForSeconds(1.0f);
+        yield return StartCoroutine(gripperController.SlideGripperSequence(-1.0f));
+        yield return StartCoroutine(gripperController.RotateTurntableSequence(0f));
+        yield return StartCoroutine(gripperController.SlideGripperSequence(0.8f));
+        grabController.Release(gripperController.liftMechanism); // liftfloor에 놓기
+        yield return StartCoroutine(gripperController.SlideGripperSequence(-0.8f));
+
+        // --- Firebase 상태 업데이트 ---
+        Debug.Log($"Firebase의 {gantryId} 상태를 '비어있음(1)'으로 업데이트합니다.");
+        Task updateTask = UpdateGantryStatus_Full(gantryId, 1, "NONE"); // 1: Empty
+        yield return new WaitUntil(() => updateTask.IsCompleted);
+=======
         Debug.Log($"[{this.acrId}] 1단계 (리프트 상승) 완료!");
         yield return new WaitForSeconds(0.5f);
 
@@ -232,6 +289,7 @@ public class ACR_PhysicalController : MonoBehaviour
         // 10단계: Gripper 후진 (원위치로)
         yield return StartCoroutine(gripperController.SlideGripperSequence(-slideDistanceToStorage));
         Debug.Log($"[{this.acrId}] 10단계 (내부 적재 공간에서 후진) 완료!");
+>>>>>>> 3aeb94fa4e3f8765644417a539cdd19ca9f1e24c
 
         Debug.Log($"--- [{this.acrId}] 모든 물리 작업 완료! 중앙 관제소에 보고합니다. ---");
         //// '나의 작업이 끝났다'고 ID를 명시하여 관제소에 보고
@@ -376,4 +434,18 @@ public class ACR_PhysicalController : MonoBehaviour
             }
         }
     }
+
+    private IEnumerator DropoffSequence(Dictionary<string, object> stopData) { /* ... 향후 구현 ... */ yield return null; }
+
+    private Task UpdateGantryStatus_Full(string gantryDocId, int newStatus, string newItemType)
+    {
+        if (db == null) return Task.CompletedTask;
+        DocumentReference gantryRef = db.Collection("Gantries").Document(gantryDocId);
+        Dictionary<string, object> updates = new Dictionary<string, object> {
+            { "status", newStatus },
+            { "itemType", newItemType }
+        };
+        return gantryRef.SetAsync(updates, SetOptions.MergeAll);
+    }
+    private string GetValueFromMap(Dictionary<string, object> dataMap, string key) => dataMap.TryGetValue(key, out object valueObj) ? valueObj.ToString() : string.Empty;
 }
